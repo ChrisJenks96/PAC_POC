@@ -179,9 +179,13 @@
 			if (result != 0)
 				return false;
 			while (pmp_isplaying()){
-				sceKernelDelayThread(1000 * 1000);
+				sceKernelDelayThread(1000*1000); // Wait 1 seconds.
 			}
+
 			pmp_stop();
+
+			//test to see if it goes beyond this point... it does
+			//sceKernelExitGame();
 			return true;
 		#endif
 	}
@@ -203,8 +207,8 @@ void video_play2(SDL_Surface* scr, char* fn, void (*sys_init)())
 			//reopen the audio mixer
 			Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
 		#elif _PSP
-			SDL_Quit();
 			strcpy(&buff[strlen(fn)], ".pmp");
+			SDL_Quit();
 			video_play(scr, buff);
 			//we have to close SDL, play the vid, reopen SDL
 			sys_init();

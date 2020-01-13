@@ -10,6 +10,15 @@ int timed_bool_toggle_max = 30; //20
 
 #ifdef _PSP
 	SceCtrlData pad;
+	SceCtrlLatch latch;
+
+	int isKeyDown(int key) {
+		return (latch.uiMake & key);
+	}
+
+	int isKeyUp(int key) {
+		return (latch.uiBreak & key);
+	}
 #endif
 
 void pc_mouse_debug_coord(float dt)

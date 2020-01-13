@@ -28,6 +28,16 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
 					fgets(buff, 128, f);
 					sscanf(buff, "%s %i %i %i %i %i", &empty[0], &e->es1[index].pos_x, &e->es1[index].pos_y, 
 						&e->es1[index].size_x, &e->es1[index].size_y, &e->es1[index].sub_events);
+					
+					//adapt coordinates for different platforms
+					//all coordinates are based off the 800 x 600 default
+					float new_coord_x = (float)((float)scr_w / 800.0f); 
+					float new_coord_y = (float)((float)scr_h / 600.0f); 
+					e->es1[index].pos_x *= new_coord_x;
+					e->es1[index].pos_y *= new_coord_y;
+					e->es1[index].size_x *= new_coord_x;
+					e->es1[index].size_y *= new_coord_y;
+
 					e->es1[index].es2 = (event_seq_child2*)malloc(sizeof(event_seq_child2) * e->es1[index].sub_events);
 					for (j = 0; j < e->es1[index].sub_events; j++)
 					{

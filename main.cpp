@@ -22,7 +22,7 @@
 
 	#define SCR_WIDTH 480
 	#define SCR_HEIGHT 272
-	#define SCR_BPP 16
+	#define SCR_BPP 32
 	#define SCR_SURF_MODE SDL_SWSURFACE
 
 	#define FONT_SIZE 14
@@ -97,9 +97,14 @@ int scoot_tmp_x, scoot_tmp_y;*/
 static void sys_init()
 {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-	scr = SDL_SetVideoMode(SCR_WIDTH, SCR_HEIGHT, SCR_BPP, SCR_SURF_MODE);
-	SDL_ShowCursor(0);
-	SDL_WM_SetCaption("PAC_POC", NULL);
+
+	//remove the screen if its passed the first time
+	if (scr == NULL)
+	{
+		scr = SDL_SetVideoMode(SCR_WIDTH, SCR_HEIGHT, SCR_BPP, SCR_SURF_MODE);
+		SDL_ShowCursor(0);
+		SDL_WM_SetCaption("PAC_POC", NULL);
+	}
 }
 
 static bool main_menu_state_setup()
@@ -408,6 +413,67 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 	return false;
 }
 
+static void game_event_update()
+{
+	#ifdef _WIN32
+	if (e.type == SDL_MOUSEBUTTONDOWN)
+	#elif _PSP
+	if (isKeyDown(PSP_CTRL_CROSS))
+	#endif
+	{
+		mouse_down = true;
+	}
+
+	#ifdef _WIN32
+	if (e.type == SDL_MOUSEBUTTONUP)
+	#elif _PSP
+	if (isKeyUp(PSP_CTRL_CROSS))
+	#endif
+	{
+		if (mouse_down)
+		{
+			//check on the hitbox events
+			if (game_state == 1)
+			{
+				int i = 0, j = 0;
+				bool go_back_flag = false;
+				//if we click at the bottom of the screen, we go backwards
+				/*if (mx >= 0 && mx <= SCR_WIDTH && 
+					my >= (SCR_HEIGHT - 20) && my <= SCR_HEIGHT)
+				{
+					//reset to old screen settings
+					bkg_id = bkg_old_id;
+					bkg_size = bkg_old_size;
+					if (update_game_hitbox(i, j, true))
+						go_back_flag = true;
+				}*/
+
+				if (!go_back_flag && menu_game_flag)
+				{
+					//go through the bkg's hitboxes
+					for (; i < bkg_size; i++)
+					{
+						if (events_pos_update(&e_s->es1[bkg_id + i], mx, my))
+						{
+							//if we find it... run the sub events
+							for (; j < e_s->es1[bkg_id + i].sub_events; j++){
+								if (update_game_hitbox(i, j, false)){
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				else
+					menu_game_flag = true;
+			}
+		}
+		
+		mouse_down = false;
+	}
+}
+
 int main(int argc, char** argv)
 {	
 	if (!general_state_setup())
@@ -447,56 +513,10 @@ int main(int argc, char** argv)
 					break;
 				case SDL_MOUSEBUTTONDOWN:
 					{
-						mouse_down = true;
 						//if we start the game, switch to game game state
 						game_state = font_select_id == 0 ? 1 : 0;
 						//have we pressed the quit button on the main menu?
 						quit = font_select_id == 2 ? true : false; //make this main menu state only
-						break;
-					}
-				case SDL_MOUSEBUTTONUP:
-					{
-						if (mouse_down)
-						{
-							//check on the hitbox events
-							if (game_state == 1)
-							{
-								int i = 0, j = 0;
-								bool go_back_flag = false;
-								//if we click at the bottom of the screen, we go backwards
-								/*if (mx >= 0 && mx <= SCR_WIDTH && 
-									my >= (SCR_HEIGHT - 20) && my <= SCR_HEIGHT)
-								{
-									//reset to old screen settings
-									bkg_id = bkg_old_id;
-									bkg_size = bkg_old_size;
-									if (update_game_hitbox(i, j, true))
-										go_back_flag = true;
-								}*/
-
-								if (!go_back_flag && menu_game_flag)
-								{
-									//go through the bkg's hitboxes
-									for (; i < bkg_size; i++)
-									{
-										if (events_pos_update(&e_s->es1[bkg_id + i], mx, my))
-										{
-											//if we find it... run the sub events
-											for (; j < e_s->es1[bkg_id + i].sub_events; j++){
-												if (update_game_hitbox(i, j, false)){
-													break;
-												}
-											}
-										}
-									}
-								}
-
-								else
-									menu_game_flag = true;
-							}
-						}
-
-						mouse_down = false;
 						break;
 					}
 				case SDL_KEYDOWN:
@@ -512,15 +532,16 @@ int main(int argc, char** argv)
 			}
 		#else
 			sceCtrlReadBufferPositive(&pad, 1); 
+			sceCtrlReadLatch(&latch);
 			if (pad.Buttons != 0)
 			{
-				if (pad.Buttons & PSP_CTRL_SELECT)
+				if (isKeyDown(PSP_CTRL_SELECT))
 				{
 					if (!inv_key_press)
 						inv_key_press = true;
 				}
 
-				if (pad.Buttons & PSP_CTRL_CROSS){
+				if (isKeyDown(PSP_CTRL_CROSS)){
 					//if we start the game, switch to game game state
 					game_state = font_select_id == 0 ? 1 : 0;
 					//have we pressed the quit button on the main menu?
@@ -547,6 +568,8 @@ int main(int argc, char** argv)
 
 			game_state_update();
 		}
+
+		game_event_update();
 
 		//always render cursor last
 		if (event_text_len != 0)

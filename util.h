@@ -21,6 +21,10 @@ typedef struct vec2_int32
 
 #ifdef _PSP
 	extern SceCtrlData pad;
+	extern SceCtrlLatch latch;
+
+	int isKeyDown(int key);
+	int isKeyUp(int key);
 #endif
 
 extern char str[256];
