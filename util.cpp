@@ -192,8 +192,9 @@ font_surface* font_multicol_setup(TTF_Font* f, char* txt, SDL_Color b, SDL_Color
 		else
 		{
 			//offset previous surface against the new one
-			if (center_text)
+			if (center_text){
 				s[i-1].r.x -= (s[i].s->w / 2);
+			}
 			//create the whitespace between characters
 			//change 8 to font whitespace pixel width
 			s[i].r.x = s[i-1].r.x + s[i-1].s->w + 5;

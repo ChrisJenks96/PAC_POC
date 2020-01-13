@@ -185,3 +185,26 @@
 			return true;
 		#endif
 	}
+
+//USE THIS ONE!!!
+//parent function to the original function
+//houses all platforms
+void video_play2(SDL_Surface* scr, char* fn, void (*sys_init)())
+{
+	char buff[32];
+	strcpy(&buff[0], fn);
+	//shutdown the audio mixer first else we cant play
+	Mix_CloseAudio();
+	#ifdef _WIN32
+		strcpy(&buff[strlen(fn)], ".mpg");
+		video_play(scr, buff);
+	#elif _PSP
+		SDL_Quit();
+		strcpy(&buff[strlen(fn)], ".pmp");
+		video_play(scr, buff);
+		//we have to close SDL, play the vid, reopen SDL
+		sys_init();
+	#endif
+	//reopen the audio mixer
+	Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
+}

@@ -48,7 +48,7 @@ Mix_Music* music = NULL;
 //tracking if the last played music is the same... hence we dont need to delete
 int music_event_id = -1, music_event_id2 = -1;
 
-int skip_cutscenes = 1;
+int skip_cutscenes = 0;
 int game_state = 1;
 bool game_state_setup_flag = false;
 TTF_Font* font = NULL;
@@ -134,8 +134,7 @@ static bool general_state_setup()
 	err = Mix_Init(MIX_INIT_OGG);
 	if (err == -1)
 		return false;
-	if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) == -1)
-		return false;
+	Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
 
 	cursor = SDL_LoadBMP("cursor.bmp");
 	SDL_SetColorKey(cursor, SDL_SRCCOLORKEY, SDL_MapRGB(cursor->format, 36, 149, 180));
@@ -389,6 +388,13 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 			music_playing_flag = true;
 			return true;
 		}
+
+		else if (e_s->es1[bkg_id + i].es2[j].id == VIDEO_ID)
+		{
+			video_play2(scr, e_s->es1[bkg_id + i].es2[j].id_str, &sys_init);
+			return true;
+		}
+
 	}
 
 	else
@@ -529,18 +535,10 @@ int main(int argc, char** argv)
 					return -1;
 				game_state_setup_flag = true;
 				//for debugging
-				if (!skip_cutscenes)
-				{
-					#ifdef _WIN32
-						video_play(scr, "test.mpg");
-					#elif _PSP
-						SDL_Quit();
-						video_play(scr, "test.pmp");
-						//we have to close SDL, play the vid, reopen SDL
-						sys_init();
-					#endif
+				if (!skip_cutscenes){
+					video_play2(scr, "test", &sys_init);
 				}
-				//
+
 				SDL_Delay(1000);
 			}
 

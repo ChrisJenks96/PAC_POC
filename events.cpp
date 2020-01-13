@@ -32,8 +32,7 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
 					if (strcmp(empty, "text") == 0){
 						sscanf(buff, "%s %i", &empty[0], &e->es1[index].es2[j].str_num_cols);
 						//buff[5] removes text preface and -1 removes string formatting at end
-						strncpy(&e->es1[index].es2[j].id_str[0], &buff[7], (strlen(buff) - 7) - 2);
-						//e->es1[index].es2[j].id_str[str_end(e->es1[index].es2[j].id_str, 64)] = 0;
+						strncpy(&e->es1[index].es2[j].id_str[0], &buff[7], strlen(buff) - 7);
 					}
 
 					else

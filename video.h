@@ -8,11 +8,13 @@
 
 #ifdef _WIN32
 	#include <SDL.h>
+	#include <SDL_mixer.h>
 	#include <smpeg.h>
 #elif _PSP
 	#include <pspkernel.h>
 	#include <pspgu.h>
 	#include <SDL/SDL.h>
+	#include <SDL/SDL_mixer.h>
 	#include <pmp/pmp.h>
 #endif
 
@@ -46,5 +48,6 @@
 #endif
 
 	bool video_play(SDL_Surface* scr, char* n);
+	void video_play2(SDL_Surface* scr, char* fn, void (*sys_init)());
 
 #endif
