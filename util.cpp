@@ -52,6 +52,23 @@ bool timed_bool(bool* k, bool* k_press, float dt, float s)
 	return *k;
 }
 
+SDL_Surface* load_bmp(char* fn)
+{
+	SDL_Surface* s;
+	char buff[32];
+	#ifdef _WIN32
+		strcpy(&buff[0], "win/");
+	#elif _PSP
+		strcpy(&buff[0], "psp/");
+	#endif
+	strcpy(&buff[strlen(buff)], fn);
+	s = SDL_LoadBMP(buff);
+	if (!s)
+		return NULL;
+	else
+		return s;
+}
+
 Uint32 getpixel(SDL_Surface *surface, int x, int y)
 {
     int bpp = surface->format->BytesPerPixel;

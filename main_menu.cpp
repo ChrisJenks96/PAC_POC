@@ -10,7 +10,7 @@ SDL_Surface* grad_bkg;
 
 void main_menu_setup()
 {
-	grad_bkg = SDL_LoadBMP("mm_bkg.bmp");
+	grad_bkg = load_bmp("mm_bkg.bmp");
 }
 
 bool mm_font_setup_surface(TTF_Font* f, SDL_Surface* scr, int font_size, char* txt, int y_offset)

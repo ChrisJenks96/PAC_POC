@@ -10,7 +10,7 @@ SDL_Surface* inv;
 void inventory_init(char* fn)
 {
 	int i;
-	inv = SDL_LoadBMP("inventory.bmp");
+	inv = load_bmp("inventory.bmp");
 	for (i = 0; i < INV_TILE_COUNT; i++)
 	{
 		r_inv_source[i].w = r_inv_dest[i].w = INV_TILE_SIZE;

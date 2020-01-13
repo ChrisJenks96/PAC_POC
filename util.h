@@ -29,6 +29,9 @@ extern uint8_t mouse_down_count;
 extern int mx, my;
 extern SDL_Rect cursor_dest;
 
+static int skip_cutscenes = 1;
+static int game_state = 1;
+
 extern float timed_bool_toggle_counter; //0 -> toggle_max
 extern int timed_bool_toggle_max; //20
 
@@ -48,6 +51,8 @@ void mouse_update(float dt);
 void pc_mouse_debug_coord(float dt);
 //timed key press
 bool timed_bool(bool* k, bool* k_press, float dt, float s);
+
+SDL_Surface* load_bmp(char* fn);
 
 //hacky string end for our string format w/ color
 int str_end(char* s, int size);

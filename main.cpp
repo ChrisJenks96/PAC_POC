@@ -48,8 +48,6 @@ Mix_Music* music = NULL;
 //tracking if the last played music is the same... hence we dont need to delete
 int music_event_id = -1, music_event_id2 = -1;
 
-int skip_cutscenes = 0;
-int game_state = 1;
 bool game_state_setup_flag = false;
 TTF_Font* font = NULL;
 SDL_Surface* scr = NULL;
@@ -67,6 +65,8 @@ int bkg_id = BKG_0_ID;
 int bkg_old_id = BKG_0_ID;
 int bkg_size = BKG_0_SIZE;
 int bkg_old_size = BKG_0_SIZE;
+//the final dest of the bkg surface
+SDL_Rect bkg_dest;
 SDL_Surface* bkg, *cursor, *test;
 font_surface* event_text = NULL;
 int event_text_len = 0;
@@ -136,7 +136,7 @@ static bool general_state_setup()
 		return false;
 	Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
 
-	cursor = SDL_LoadBMP("cursor.bmp");
+	cursor = load_bmp("cursor.bmp");
 	SDL_SetColorKey(cursor, SDL_SRCCOLORKEY, SDL_MapRGB(cursor->format, 36, 149, 180));
 	cursor_dest.h = cursor->h;
 	cursor_dest.w = cursor->w;
@@ -152,15 +152,17 @@ static void main_menu_state_update()
 static bool game_state_setup()
 {
 	//SDL_SetColorKey(fore, SDL_RLEACCEL | SDL_SRCCOLORKEY, SDL_MapRGB(fore->format, 0, 0, 0));
-	bkg = SDL_LoadBMP("main_camera_1.bmp");
-	test = SDL_LoadBMP("test.bmp");
+	bkg = load_bmp("main_camera_1.bmp");
+	//offset it so we can centralise the bkg
+	bkg_dest.x += ((SCR_WIDTH - bkg->w) / 2);
+	bkg_dest.y += ((SCR_HEIGHT - bkg->h) / 2);
 
 	//load event data in for current frame
 
 	e_s = events_pos_parse("scenes/scene_1.events", SCR_WIDTH, SCR_HEIGHT);
 
 	//load scooter animation in
-	//scoot_anim = SDL_LoadBMP(SCOOTER_FILE_NAME);
+	//scoot_anim = load_bmp(SCOOTER_FILE_NAME);
 	//SDL_SetColorKey(scoot_anim, SDL_RLEACCEL | SDL_SRCCOLORKEY, SDL_MapRGB(scoot_anim->format, 255, 255, 255));
 
 	//load animation data in
@@ -228,7 +230,7 @@ static void game_state_update()
 		//SDL_FillRect(scr, NULL, 0x00000000);
 
 		//game stuff...
-		SDL_BlitSurface(bkg, NULL, scr, NULL);
+		SDL_BlitSurface(bkg, NULL, scr, &bkg_dest);
 		
 		//test stuff with boundaries
 		//SDL_Rect r = {e_s->es1[1].pos_x, e_s->es1[1].pos_y, e_s->es1[1].size_x, e_s->es1[1].size_y};
@@ -294,9 +296,13 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 			SDL_FreeSurface(bkg);
 			//the first shot of the game is not part of the script (05/01/2020)
 			if ((bkg_id + i) == 0 && go_back)
-				bkg = SDL_LoadBMP("main_camera_1.bmp");
+				bkg = load_bmp("main_camera_1.bmp");
 			else
-				bkg = SDL_LoadBMP(e_s->es1[bkg_id + i].es2[j].id_str);
+				bkg = load_bmp(e_s->es1[bkg_id + i].es2[j].id_str);
+
+			//offset it so we can centralise the bkg
+			bkg_dest.x += ((SCR_WIDTH - bkg->w) / 2);
+			bkg_dest.y += ((SCR_HEIGHT - bkg->h) / 2);
 
 			if (!go_back)
 			{
@@ -535,10 +541,7 @@ int main(int argc, char** argv)
 					return -1;
 				game_state_setup_flag = true;
 				//for debugging
-				if (!skip_cutscenes){
-					video_play2(scr, "test", &sys_init);
-				}
-
+				video_play2(scr, "test", &sys_init);
 				SDL_Delay(1000);
 			}
 

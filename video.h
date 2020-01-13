@@ -18,6 +18,8 @@
 	#include <pmp/pmp.h>
 #endif
 
+#include "util.h"
+
 #ifdef _WIN32
 	/* Flag telling the UI that the movie or song should be skipped */
 	extern int done;
