@@ -45,6 +45,9 @@
 //main shit
 bool music_playing_flag = false;
 Mix_Music* music = NULL;
+//tracking if the last played music is the same... hence we dont need to delete
+int music_event_id = -1, music_event_id2 = -1;
+
 int skip_cutscenes = 1;
 int game_state = 1;
 bool game_state_setup_flag = false;
@@ -352,7 +355,7 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 		{
 			if (event_text)
 				font_multicol_destroy(event_text, 1);
-			event_text_len = strlen(e_s->es1[bkg_id + i].es2[j].id_str);
+			event_text_len = str_end(e_s->es1[bkg_id + i].es2[j].id_str, 64);
 			event_text_col_number = e_s->es1[bkg_id + i].es2[j].str_num_cols;
 			event_text = font_multicol_setup(font, 
 				e_s->es1[bkg_id + i].es2[j].id_str, w, r, (SCR_WIDTH / 2), SCR_HEIGHT - 30, true);
@@ -361,16 +364,24 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 
 		else if (e_s->es1[bkg_id + i].es2[j].id == SOUND_ID)
 		{
-			if (music != NULL){
-				Mix_FreeMusic(music);
-				music = NULL;
-			}
-			else
+			//prevent us from reloading music if we're simply repeating it
+			if (music_event_id != (bkg_id + i) && music_event_id2 != j)
 			{
-				music = Mix_LoadMUS(e_s->es1[bkg_id + i].es2[j].id_str);
-				if (music == NULL){
-					printf("%s", Mix_GetError());
-					return false;
+				//track our music event ids
+				music_event_id = (bkg_id + i);
+				music_event_id2 = j;
+
+				if (music != NULL){
+					Mix_FreeMusic(music);
+					music = NULL;
+				}
+				else
+				{
+					music = Mix_LoadMUS(e_s->es1[bkg_id + i].es2[j].id_str);
+					if (music == NULL){
+						printf("%s", Mix_GetError());
+						return false;
+					}
 				}
 			}
 
@@ -409,12 +420,8 @@ int main(int argc, char** argv)
 		//If there is no music playing
 		if (music_playing_flag)
 		{
-			if(Mix_PlayingMusic() == 0 )
-			{
-				if (music != NULL){
-					Mix_FreeMusic(music);
-					music = NULL;
-				}
+			//dont free music up here... done in the event system instead
+			if(Mix_PlayingMusic() == 0 ){
 				music_playing_flag = false;
 			}
 		}

@@ -4,6 +4,7 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
 {
 	FILE* f;
 	int curr_event = 0, index = 0, i, j;
+	//tmp buffers for data
 	char buff[128], empty[128];
 	event_seq* e = (event_seq*)malloc(sizeof(event_seq));
 	e->num_events = 0;
@@ -32,7 +33,7 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
 						sscanf(buff, "%s %i", &empty[0], &e->es1[index].es2[j].str_num_cols);
 						//buff[5] removes text preface and -1 removes string formatting at end
 						strncpy(&e->es1[index].es2[j].id_str[0], &buff[7], (strlen(buff) - 7) - 2);
-						e->es1[index].es2[j].id_str[strlen(e->es1[index].es2[j].id_str)] = 0;
+						//e->es1[index].es2[j].id_str[str_end(e->es1[index].es2[j].id_str, 64)] = 0;
 					}
 
 					else
@@ -42,7 +43,7 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
 					}
 
 					e->es1[index].es2[j].done = false;
-
+					//assign proper id to event
 					if (strcmp(empty, "next_scene") == 0)
 						e->es1[index].es2[j].id = NEXT_SCENE_ID;
 					else if (strcmp(empty, "text") == 0)

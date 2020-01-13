@@ -116,11 +116,20 @@ void putpixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
     }
 }
 
+int str_end(char* s, int size)
+{
+	//run through whole string, find '<', leave..
+	int id = -1, c = 0;
+	for (; c < size; c++)
+		id = s[c] == '>' ? c : id;
+	return id;
+}
+
 //txt to break down <g><g>
 font_surface* font_multicol_setup(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text)
 {
 	font_surface* s;
-	int i = 0,c = 0, surf_count = 0, str_size = strlen(txt);
+	int i = 0, c = 0, surf_count = 0, str_size = str_end(txt, 64);
 	//oversized int array to store color elems (if any)
 	unsigned char* txt_col_ids = new unsigned char[str_size];
 	int txt_col_count = 0;
@@ -182,14 +191,13 @@ font_surface* font_multicol_setup(TTF_Font* f, char* txt, SDL_Color b, SDL_Color
 
 		else
 		{
+			//offset previous surface against the new one
+			if (center_text)
+				s[i-1].r.x -= (s[i].s->w / 2);
 			//create the whitespace between characters
 			//change 8 to font whitespace pixel width
 			s[i].r.x = s[i-1].r.x + s[i-1].s->w + 5;
-			s[i].r.y = s[i-1].r.y;
-			if (center_text){
-				s[i].r.x -= (s[i].s->w / 2);
-				s[i].r.y -= (s[i].s->h / 2);
-			}
+			s[i].r.y = s[i-1].r.y;	
 		}
 
 		c+=4;

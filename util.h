@@ -49,6 +49,9 @@ void pc_mouse_debug_coord(float dt);
 //timed key press
 bool timed_bool(bool* k, bool* k_press, float dt, float s);
 
+//hacky string end for our string format w/ color
+int str_end(char* s, int size);
+
 //multi coloured fonts
 font_surface* font_multicol_setup(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text);
 void font_multicol_render(SDL_Surface* scr, font_surface* s, int n);

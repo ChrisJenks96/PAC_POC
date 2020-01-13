@@ -5,6 +5,8 @@
 #include <string.h>
 #include <malloc.h>
 
+#include "util.h"
+
 #define SOUND_ID 0
 #define VIDEO_ID 1
 #define TEXT_ID 2
