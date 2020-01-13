@@ -30,7 +30,7 @@ extern int mx, my;
 extern SDL_Rect cursor_dest;
 
 static int skip_cutscenes = 1;
-static int game_state = 1;
+static int game_state = 0;
 
 extern float timed_bool_toggle_counter; //0 -> toggle_max
 extern int timed_bool_toggle_max; //20
@@ -53,9 +53,11 @@ void pc_mouse_debug_coord(float dt);
 bool timed_bool(bool* k, bool* k_press, float dt, float s);
 
 SDL_Surface* load_bmp(char* fn);
+SDL_Surface* scale_surface(SDL_Surface *Surface, Uint16 Width, Uint16 Height);
 
 //hacky string end for our string format w/ color
 int str_end(char* s, int size);
+int str_find(char* s, char c, int size);
 
 //multi coloured fonts
 font_surface* font_multicol_setup(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text);

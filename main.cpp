@@ -52,7 +52,7 @@ bool game_state_setup_flag = false;
 TTF_Font* font = NULL;
 SDL_Surface* scr = NULL;
 SDL_Event e;
-bool quit;
+bool quit = false;
 int startclock = 0;
 float delta_time = 0.0f;
 bool mouse_down = false;
@@ -105,7 +105,7 @@ static void sys_init()
 static bool main_menu_state_setup()
 {
 	//setup main menu
-	main_menu_setup();
+	main_menu_setup(scr);
 	return true;
 }
 
@@ -140,7 +140,6 @@ static bool general_state_setup()
 	SDL_SetColorKey(cursor, SDL_SRCCOLORKEY, SDL_MapRGB(cursor->format, 36, 149, 180));
 	cursor_dest.h = cursor->h;
 	cursor_dest.w = cursor->w;
-	quit = false;
 	return true;
 }
 
@@ -152,14 +151,15 @@ static void main_menu_state_update()
 static bool game_state_setup()
 {
 	//SDL_SetColorKey(fore, SDL_RLEACCEL | SDL_SRCCOLORKEY, SDL_MapRGB(fore->format, 0, 0, 0));
-	bkg = load_bmp("main_camera_1.bmp");
+	bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
 	//offset it so we can centralise the bkg
-	bkg_dest.x += ((SCR_WIDTH - bkg->w) / 2);
-	bkg_dest.y += ((SCR_HEIGHT - bkg->h) / 2);
+	bkg_dest.x = (Sint16)((SCR_WIDTH - bkg->w) / 2);
+	bkg_dest.y = (Sint16)((SCR_HEIGHT - bkg->h) / 2);
 
 	//load event data in for current frame
-
 	e_s = events_pos_parse("scenes/scene_1.events", SCR_WIDTH, SCR_HEIGHT);
+	if (e_s == NULL)
+		return false;
 
 	//load scooter animation in
 	//scoot_anim = load_bmp(SCOOTER_FILE_NAME);
@@ -296,9 +296,9 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 			SDL_FreeSurface(bkg);
 			//the first shot of the game is not part of the script (05/01/2020)
 			if ((bkg_id + i) == 0 && go_back)
-				bkg = load_bmp("main_camera_1.bmp");
+				bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
 			else
-				bkg = load_bmp(e_s->es1[bkg_id + i].es2[j].id_str);
+				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + i].es2[j].id_str), SCR_WIDTH, SCR_HEIGHT);
 
 			//offset it so we can centralise the bkg
 			bkg_dest.x += ((SCR_WIDTH - bkg->w) / 2);
@@ -395,8 +395,7 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 			return true;
 		}
 
-		else if (e_s->es1[bkg_id + i].es2[j].id == VIDEO_ID)
-		{
+		else if (e_s->es1[bkg_id + i].es2[j].id == VIDEO_ID){
 			video_play2(scr, e_s->es1[bkg_id + i].es2[j].id_str, &sys_init);
 			return true;
 		}
@@ -451,7 +450,6 @@ int main(int argc, char** argv)
 						mouse_down = true;
 						//if we start the game, switch to game game state
 						game_state = font_select_id == 0 ? 1 : 0;
-
 						//have we pressed the quit button on the main menu?
 						quit = font_select_id == 2 ? true : false; //make this main menu state only
 						break;
@@ -525,6 +523,8 @@ int main(int argc, char** argv)
 				if (pad.Buttons & PSP_CTRL_CROSS){
 					//if we start the game, switch to game game state
 					game_state = font_select_id == 0 ? 1 : 0;
+					//have we pressed the quit button on the main menu?
+					quit = font_select_id == 2 ? true : false; //make this main menu state only
 				}
 			}
 		#endif
@@ -538,7 +538,7 @@ int main(int argc, char** argv)
 				//unload main menu
 				main_menu_state_destroy();
 				if (!game_state_setup())
-					return -1;
+					quit = true;
 				game_state_setup_flag = true;
 				//for debugging
 				video_play2(scr, "test", &sys_init);

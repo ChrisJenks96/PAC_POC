@@ -14,7 +14,6 @@
 #define START_ANIM_ID 4
 #define END_ANIM_ID 5
 
-#pragma pack(push, 1)
 typedef struct event_seq_child2
 {
 	//have we done the event yet?
@@ -39,7 +38,6 @@ typedef struct event_seq
 	int num_events;
 	event_seq_child* es1;
 } event_seq;
-#pragma pack(pop, 1)
 
 event_seq* events_pos_parse(char* fn, int scr_w, int scr_h);
 bool events_pos_update(event_seq_child* e, int mx, int my);

@@ -6,11 +6,12 @@ SDL_Color font_c_unhighlight = {128,128,128};
 SDL_Rect r1;
 SDL_Surface* s;
 
+SDL_Rect grad_bkg_dest;
 SDL_Surface* grad_bkg;
 
-void main_menu_setup()
+void main_menu_setup(SDL_Surface* scr)
 {
-	grad_bkg = load_bmp("mm_bkg.bmp");
+	grad_bkg = scale_surface(load_bmp("mm_bkg.bmp"), scr->w, scr->h);
 }
 
 bool mm_font_setup_surface(TTF_Font* f, SDL_Surface* scr, int font_size, char* txt, int y_offset)
@@ -43,7 +44,10 @@ void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size)
 	font_select_id = -1;
 
 	//render bkg
-	SDL_BlitSurface(grad_bkg, NULL, scr, NULL);
+	//offset it so we can centralise the bkg
+	grad_bkg_dest.x = ((scr->w - grad_bkg->w) / 2);
+	grad_bkg_dest.y = ((scr->h - grad_bkg->h) / 2);
+	SDL_BlitSurface(grad_bkg, NULL, scr, &grad_bkg_dest);
 
 	//render fonts 	
 	font_select_id = mm_font_setup_surface(f, scr, font_size, "New Game", 50) == 1 ? 0 : font_select_id;

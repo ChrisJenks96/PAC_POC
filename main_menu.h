@@ -17,9 +17,10 @@ extern SDL_Color font_c_unhighlight;
 extern SDL_Rect r1;
 extern SDL_Surface* s;
 
+extern SDL_Rect grad_bkg_dest;
 extern SDL_Surface* grad_bkg;
 
-void main_menu_setup();
+void main_menu_setup(SDL_Surface* scr);
 bool mm_font_setup_surface(TTF_Font* f, SDL_Surface* scr, int font_size, char* txt, int y_offset);
 void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size);
 void main_menu_destroy();
