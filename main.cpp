@@ -5,7 +5,7 @@
 
 	#define SCR_WIDTH 800
 	#define SCR_HEIGHT 600
-	#define SCR_BPP 24
+	#define SCR_BPP 32
 	#define SCR_SURF_MODE SDL_SWSURFACE
 
 	#define FONT_SIZE 20
@@ -39,7 +39,7 @@
 #include "util.h"
 #include "anim.h"
 #include "events.h"
-
+#include "save.h"
 #include "video.h"
 
 //main shit
@@ -47,7 +47,8 @@ bool music_playing_flag = false;
 Mix_Music* music = NULL;
 //tracking if the last played music is the same... hence we dont need to delete
 int music_event_id = -1, music_event_id2 = -1;
-
+//used to activate a save game once (event based key press)
+bool save_game_flag = false;
 bool game_state_setup_flag = false;
 TTF_Font* font = NULL;
 SDL_Surface* scr = NULL;
@@ -62,7 +63,10 @@ bool menu_game_flag = false;
 
 //used to show which background is shown
 int bkg_id = BKG_0_ID;
+int bkg_id_offset = 0;
+int bkg_sub_event_id = 0;
 int bkg_old_id = BKG_0_ID;
+//used for going backwards to the last frame... currently W.I.P (14/01/2020)
 int bkg_size = BKG_0_SIZE;
 int bkg_old_size = BKG_0_SIZE;
 //the final dest of the bkg surface
@@ -155,16 +159,44 @@ static void main_menu_state_update()
 
 static bool game_state_setup()
 {
-	//SDL_SetColorKey(fore, SDL_RLEACCEL | SDL_SRCCOLORKEY, SDL_MapRGB(fore->format, 0, 0, 0));
-	bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
+	//depending on the main menu selection
+	if (font_select_id == 0)
+		game_start_state = GS_NEW_GAME;
+	else
+	{
+		game_start_state = GS_LOAD_GAME;
+		//load the game, if no save exists, assign the new game flag again else continue on
+		if (!game_load()){
+			//start new game mode
+			game_start_state = GS_NEW_GAME;
+		}
+	}
+
+	if (game_start_state == GS_NEW_GAME){
+		//load event data in for current frame
+		e_s = events_pos_parse("scenes/scene_1.events", SCR_WIDTH, SCR_HEIGHT);
+		if (e_s == NULL)
+			return false;
+		bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
+	}
+
+	else if (game_start_state == GS_LOAD_GAME)
+	{
+		//sync the loaded save variables with current game
+		bkg_id = gs_bkg_id + 1;
+		bkg_size = gs_bkg_size;
+		bkg_id_offset = gs_bkg_id_offset;
+
+		//load event data in for current frame
+		e_s = events_pos_parse(scn, SCR_WIDTH, SCR_HEIGHT);
+		if (e_s == NULL)
+			return false;
+		bkg = scale_surface(load_bmp(e_s->es1[gs_bkg_id].es2[0].id_str), SCR_WIDTH, SCR_HEIGHT);
+	}
+
 	//offset it so we can centralise the bkg
 	bkg_dest.x = (Sint16)((SCR_WIDTH - bkg->w) / 2);
 	bkg_dest.y = (Sint16)((SCR_HEIGHT - bkg->h) / 2);
-
-	//load event data in for current frame
-	e_s = events_pos_parse("scenes/scene_1.events", SCR_WIDTH, SCR_HEIGHT);
-	if (e_s == NULL)
-		return false;
 
 	//load scooter animation in
 	//scoot_anim = load_bmp(SCOOTER_FILE_NAME);
@@ -277,33 +309,33 @@ static void game_state_destroy()
 }
 
 //when we click on a game hitbox, we update everything
-static bool update_game_hitbox(int i, int j, bool go_back)
+static bool update_game_hitbox(bool go_back)
 {
 	//prevents it from being rendered if its equal to 0
 	event_text_len = 0;
 
 	//reset if all the events being done
-	int last_id = e_s->es1[bkg_id + i].sub_events - 1;
-	if (e_s->es1[bkg_id + i].es2[last_id].done)
+	int last_id = e_s->es1[bkg_id + bkg_id_offset].sub_events - 1;
+	if (e_s->es1[bkg_id + bkg_id_offset].es2[last_id].done)
 	{
 		int k = 0;
 		for (; k < (last_id + 1); k++){
-			e_s->es1[bkg_id + i].es2[k].done = false;
+			e_s->es1[bkg_id + bkg_id_offset].es2[k].done = false;
 		}
 	}
 
-	if (!e_s->es1[bkg_id + i].es2[j].done)
+	if (!e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].done)
 	{
 		//make sure the event is now done so we can move on to the next one
-		e_s->es1[bkg_id + i].es2[j].done = true;
-		if (e_s->es1[bkg_id + i].es2[j].id == NEXT_SCENE_ID)
+		e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].done = true;
+		if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == NEXT_SCENE_ID)
 		{
 			SDL_FreeSurface(bkg);
 			//the first shot of the game is not part of the script (05/01/2020)
-			if ((bkg_id + i) == 0 && go_back)
+			if ((bkg_id + bkg_id_offset) == 0 && go_back)
 				bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
 			else
-				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + i].es2[j].id_str), SCR_WIDTH, SCR_HEIGHT);
+				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), SCR_WIDTH, SCR_HEIGHT);
 
 			//offset it so we can centralise the bkg
 			bkg_dest.x += ((SCR_WIDTH - bkg->w) / 2);
@@ -326,11 +358,11 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 					{
 						bkg_old_id = bkg_id;
 						bkg_old_size = bkg_size;
-						if (i == 0){
+						if (bkg_id_offset == 0){
 							bkg_id = BKG_3_ID; 
 							bkg_size = BKG_3_SIZE; 
 						}
-						else if (i == 1){
+						else if (bkg_id_offset == 1){
 							bkg_id = BKG_2_ID; 
 							bkg_size = BKG_2_SIZE; 
 						}
@@ -357,29 +389,29 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 				}
 			}
 
-			SDL_Delay(1000);
+			SDL_Delay(GAME_DEFAULT_DELAY);
 			return true;
 		}
 
-		else if (e_s->es1[bkg_id + i].es2[j].id == TEXT_ID)
+		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == TEXT_ID)
 		{
 			if (event_text)
 				font_multicol_destroy(event_text, 1);
-			event_text_len = str_end(e_s->es1[bkg_id + i].es2[j].id_str, 64);
-			event_text_col_number = e_s->es1[bkg_id + i].es2[j].str_num_cols;
+			event_text_len = str_end(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, 64);
+			event_text_col_number = e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].str_num_cols;
 			event_text = font_multicol_setup(font, 
-				e_s->es1[bkg_id + i].es2[j].id_str, w, r, (SCR_WIDTH / 2), SCR_HEIGHT - 30, true);
+				e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, w, r, (SCR_WIDTH / 2), SCR_HEIGHT - 30, true);
 			return true;
 		}
 
-		else if (e_s->es1[bkg_id + i].es2[j].id == SOUND_ID)
+		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == SOUND_ID)
 		{
 			//prevent us from reloading music if we're simply repeating it
-			if (music_event_id != (bkg_id + i) && music_event_id2 != j)
+			if (music_event_id != (bkg_id + bkg_id_offset) && music_event_id2 != bkg_sub_event_id)
 			{
 				//track our music event ids
-				music_event_id = (bkg_id + i);
-				music_event_id2 = j;
+				music_event_id = (bkg_id + bkg_id_offset);
+				music_event_id2 = bkg_sub_event_id;
 
 				if (music != NULL){
 					Mix_FreeMusic(music);
@@ -387,7 +419,7 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 				}
 				else
 				{
-					music = Mix_LoadMUS(e_s->es1[bkg_id + i].es2[j].id_str);
+					music = Mix_LoadMUS(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
 					if (music == NULL){
 						printf("%s", Mix_GetError());
 						return false;
@@ -400,8 +432,8 @@ static bool update_game_hitbox(int i, int j, bool go_back)
 			return true;
 		}
 
-		else if (e_s->es1[bkg_id + i].es2[j].id == VIDEO_ID){
-			video_play2(scr, e_s->es1[bkg_id + i].es2[j].id_str, &sys_init);
+		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == VIDEO_ID){
+			video_play2(scr, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, &sys_init);
 			return true;
 		}
 
@@ -435,7 +467,7 @@ static void game_event_update()
 			//check on the hitbox events
 			if (game_state == 1)
 			{
-				int i = 0, j = 0;
+				bkg_id_offset = 0, bkg_sub_event_id = 0;
 				bool go_back_flag = false;
 				//if we click at the bottom of the screen, we go backwards
 				/*if (mx >= 0 && mx <= SCR_WIDTH && 
@@ -450,18 +482,23 @@ static void game_event_update()
 
 				if (!go_back_flag && menu_game_flag)
 				{
+					bool found = false;
 					//go through the bkg's hitboxes
-					for (; i < bkg_size; i++)
+					for (; bkg_id_offset < bkg_size; bkg_id_offset++)
 					{
-						if (events_pos_update(&e_s->es1[bkg_id + i], mx, my))
+						if (events_pos_update(&e_s->es1[bkg_id + bkg_id_offset], mx, my))
 						{
 							//if we find it... run the sub events
-							for (; j < e_s->es1[bkg_id + i].sub_events; j++){
-								if (update_game_hitbox(i, j, false)){
+							for (; bkg_sub_event_id < e_s->es1[bkg_id + bkg_id_offset].sub_events; bkg_sub_event_id++){
+								if (update_game_hitbox(false)){
+									found = true;
 									break;
 								}
 							}
 						}
+
+						if (found)
+							break;
 					}
 				}
 
@@ -503,6 +540,19 @@ int main(int argc, char** argv)
 			}
 		}
 
+		if (save_game_flag)
+		{
+			//set all game save variables before saving
+			gs_scene_id = 0;
+			//-1 because we start before the 0th bkg hence we need to jump back one frame
+			//no bkg_id_offset as this prevents the background from being loaded in array elem 0
+			gs_bkg_id = (bkg_id - 1);// + bkg_id_offset;
+			gs_bkg_size = bkg_size;
+			gs_bkg_id_offset = bkg_id_offset;
+			game_save();
+			save_game_flag = false;
+		}
+
 		//events
 		#ifdef _WIN32
 			SDL_PollEvent(&e);
@@ -514,14 +564,24 @@ int main(int argc, char** argv)
 				case SDL_MOUSEBUTTONDOWN:
 					{
 						//if we start the game, switch to game game state
-						game_state = font_select_id == 0 ? 1 : 0;
+						game_state = font_select_id == 0 || font_select_id == 1 ? 1 : 0;
 						//have we pressed the quit button on the main menu?
 						quit = font_select_id == 2 ? true : false; //make this main menu state only
 						break;
 					}
+				case SDL_KEYUP:
+					switch(e.key.keysym.sym )
+					{
+						case SDLK_F1:
+							save_game_flag = false;
+							break;
+					}
 				case SDL_KEYDOWN:
 					switch(e.key.keysym.sym )
 					{
+						case SDLK_F1:
+							save_game_flag = true;
+							break;
 						//toggle the inventory (in game)
 						case SDLK_TAB:
 							if (!inv_key_press)
@@ -543,10 +603,15 @@ int main(int argc, char** argv)
 
 				if (isKeyDown(PSP_CTRL_CROSS)){
 					//if we start the game, switch to game game state
-					game_state = font_select_id == 0 ? 1 : 0;
+					game_state = font_select_id == 0 || font_select_id == 1 ? 1 : 0;
 					//have we pressed the quit button on the main menu?
 					quit = font_select_id == 2 ? true : false; //make this main menu state only
 				}
+
+				if (isKeyDown(PSP_CTRL_START))
+					save_game_flag = true;
+				if (isKeyUp(PSP_CTRL_START))
+					save_game_flag = false;
 			}
 		#endif
 
@@ -563,7 +628,7 @@ int main(int argc, char** argv)
 				game_state_setup_flag = true;
 				//for debugging
 				video_play2(scr, "test", &sys_init);
-				SDL_Delay(1000);
+				SDL_Delay(GAME_DEFAULT_DELAY);
 			}
 
 			game_state_update();

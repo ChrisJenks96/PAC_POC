@@ -8,6 +8,8 @@ SDL_Rect cursor_dest;
 float timed_bool_toggle_counter; //0 -> toggle_max
 int timed_bool_toggle_max = 30; //20
 
+int game_start_state = 0;
+
 #ifdef _PSP
 	SceCtrlData pad;
 	SceCtrlLatch latch;

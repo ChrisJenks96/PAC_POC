@@ -33,8 +33,16 @@ extern uint8_t mouse_down_count;
 extern int mx, my;
 extern SDL_Rect cursor_dest;
 
+//used for changing scenes, video etc.. (for effect)
+#define GAME_DEFAULT_DELAY 500
+
 static int skip_cutscenes = 1;
+//main menu (0) game (1)
 static int game_state = 0;
+//new game (0) / load game(1)
+#define GS_NEW_GAME 0
+#define GS_LOAD_GAME 1
+extern int game_start_state;
 
 extern float timed_bool_toggle_counter; //0 -> toggle_max
 extern int timed_bool_toggle_max; //20

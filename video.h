@@ -29,7 +29,7 @@
 	extern int scalesize;
 	extern int scale_width, scale_height;
 	extern int loop_play;
-	extern int i, pause;
+	extern int video_index, pause;
 	extern int volume;
 	extern Uint32 seek;
 	extern float skip;

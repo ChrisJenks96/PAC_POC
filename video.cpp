@@ -8,7 +8,7 @@
 	int scalesize;
 	int scale_width, scale_height;
 	int loop_play;
-	int i, pause;
+	int video_index, pause;
 	int volume;
 	Uint32 seek;
 	//float skip;
@@ -136,7 +136,7 @@
 				}
 			}
 
-			SDL_Delay(1000/2);
+			SDL_Delay(GAME_DEFAULT_DELAY);
 		}
 	}
 
