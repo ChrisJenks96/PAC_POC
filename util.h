@@ -4,11 +4,15 @@
 #ifdef _WIN32
 	#include <SDL.h>
 	#include <SDL_ttf.h>
+	//performance shite
+	#include <windows.h>
 #else
 	#include <pspctrl.h>
 	#include <SDL/SDL.h>
 	#include <SDL/SDL_ttf.h>
 #endif
+
+#include "experimental.h"
 
 //according to https://websemantics.uk/articles/font-size-conversion/
 #define FONT_POINT_TO_PX(x) (int)(x * 1.3f)
@@ -58,6 +62,14 @@ typedef struct font_surface
 	SDL_Rect r;
 	SDL_Surface* s;
 } font_surface;
+
+#ifdef _WIN32
+	extern double PCFreq;
+	extern __int64 CounterStart;
+
+	void StartCounter();
+	double GetCounter();
+#endif
 
 void mouse_update(float dt);
 void pc_mouse_debug_coord(float dt);

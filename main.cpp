@@ -42,6 +42,8 @@
 #include "save.h"
 #include "video.h"
 
+#include "experimental.h"
+
 //main shit
 bool music_playing_flag = false;
 Mix_Music* music = NULL;
@@ -513,6 +515,20 @@ static void game_event_update()
 
 int main(int argc, char** argv)
 {	
+	//win32 asm testing
+	#ifdef _WIN32
+		uint8_t len;
+		double c, c2;
+		StartCounter();
+		len = _strlen("test");
+		c = GetCounter();
+		printf("c:%f\n", c);
+		StartCounter();
+		len = strlen("test");
+		c2 = GetCounter();
+		printf("c2:%f\n", c2);
+	#endif
+
 	if (!general_state_setup())
 		return -1;
 	//we are only ever gonna be loading into the main menu first...

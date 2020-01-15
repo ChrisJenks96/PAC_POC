@@ -16,7 +16,7 @@ char* scene_list()
 			//break;
 		case 0:
 			strcpy(&scn[0], "scenes/scene_1.events");
-			scn[strlen(scn)] = 0;
+			scn[_strlen(scn)] = 0;
 			break;
 		default:
 			break;
@@ -34,7 +34,7 @@ bool game_save()
 	else
 	{
 		char* scn = scene_list();
-		int scn_strlen = strlen(scn);
+		int scn_strlen = _strlen(scn);
 		fwrite(&scn_strlen, 4, 1, f);
 		fwrite(scn, scn_strlen, 1, f);
 		fwrite(&gs_bkg_id, 4, 1, f);

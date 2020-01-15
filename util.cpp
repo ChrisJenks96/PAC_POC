@@ -7,7 +7,6 @@ int mx, my; //mouse coords
 SDL_Rect cursor_dest;
 float timed_bool_toggle_counter; //0 -> toggle_max
 int timed_bool_toggle_max = 30; //20
-
 int game_start_state = 0;
 
 #ifdef _PSP
@@ -20,6 +19,26 @@ int game_start_state = 0;
 
 	int isKeyUp(int key) {
 		return (latch.uiBreak & key);
+	}
+#elif _WIN32
+	double PCFreq = 0.0;
+	__int64 CounterStart = 0;
+	void StartCounter()
+	{
+		LARGE_INTEGER li;
+		QueryPerformanceFrequency(&li);
+
+		PCFreq = double(li.QuadPart)/1000.0;
+
+		QueryPerformanceCounter(&li);
+		CounterStart = li.QuadPart;
+	}
+
+	double GetCounter()
+	{
+		LARGE_INTEGER li;
+		QueryPerformanceCounter(&li);
+		return double(li.QuadPart-CounterStart)/PCFreq;
 	}
 #endif
 
@@ -72,7 +91,7 @@ SDL_Surface* load_bmp(char* fn)
 	#elif _PSP
 		strcpy(&buff[0], "psp/");
 	#endif
-	strcpy(&buff[strlen(buff)], fn);
+	strcpy(&buff[_strlen(buff)], fn);
 	s = SDL_LoadBMP(buff);
 	if (!s)
 		return NULL;

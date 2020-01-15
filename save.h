@@ -5,6 +5,8 @@
 #include <string.h>
 #include <malloc.h>
 
+#include "experimental.h"
+
 //the overall scene we are parsing to get the event data
 extern int gs_scene_id;
 //the bkg id from the current scene event

@@ -200,14 +200,14 @@ void video_play2(SDL_Surface* scr, char* fn, void (*sys_init)())
 		char buff[32];
 		strcpy(&buff[0], fn);
 		#ifdef _WIN32
-			strcpy(&buff[strlen(fn)], ".mpg");
+			strcpy(&buff[_strlen(fn)], ".mpg");
 			//shutdown the audio mixer first else we cant play
 			Mix_CloseAudio();
 			video_play(scr, buff);
 			//reopen the audio mixer
 			Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
 		#elif _PSP
-			strcpy(&buff[strlen(fn)], ".pmp");
+			strcpy(&buff[_strlen(fn)], ".pmp");
 			SDL_Quit();
 			video_play(scr, buff);
 			//we have to close SDL, play the vid, reopen SDL
