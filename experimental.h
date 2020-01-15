@@ -38,6 +38,7 @@ static inline int _strlen(const char* s)
 				and ebx, 0FFh //GOOGLE THIS... (bitwise result not of 0)???
 				jnz _strlen_loop //loop round again...
 
+			mov eax, esi
 			mov l, esi //return count
 		}
 	#else 

@@ -159,6 +159,63 @@ static void main_menu_state_update()
 	main_menu_render(font, scr, FONT_SIZE);
 }
 
+static void event_bkg_id_update()
+{
+	switch (bkg_id)
+	{
+		case BKG_0_ID:
+		{
+			bkg_old_id = bkg_id;
+			bkg_old_size = bkg_size;
+			bkg_id = BKG_1_ID; 
+			bkg_size = BKG_1_SIZE; 
+			break;
+		}
+
+		case BKG_1_ID:
+		{
+			bkg_old_id = bkg_id;
+			bkg_old_size = bkg_size;
+			if (bkg_id_offset == 0){
+				bkg_id = BKG_3_ID; 
+				bkg_size = BKG_3_SIZE; 
+			}
+			else if (bkg_id_offset == 1){
+				bkg_id = BKG_2_ID; 
+				bkg_size = BKG_2_SIZE; 
+			}
+			break;
+		}
+
+		case BKG_2_ID:
+		{
+			bkg_old_id = bkg_id;
+			bkg_old_size = bkg_size;
+			bkg_id = BKG_3_ID; 
+			bkg_size = BKG_3_SIZE; 
+			break;
+		}
+
+		case BKG_3_ID:
+		{
+			bkg_old_id = bkg_id;
+			bkg_old_size = bkg_size;
+			bkg_id = BKG_4_ID; 
+			bkg_size = BKG_4_SIZE; 
+			break;
+		}
+
+		case BKG_4_ID:
+		{
+			//bkg_old_id = bkg_id;
+			//bkg_old_size = bkg_size;
+			//bkg_id = BKG_4_ID; 
+			//bkg_size = BKG_4_SIZE; 
+			break;
+		}
+	}
+}
+
 static bool game_state_setup()
 {
 	//depending on the main menu selection
@@ -185,7 +242,7 @@ static bool game_state_setup()
 	else if (game_start_state == GS_LOAD_GAME)
 	{
 		//sync the loaded save variables with current game
-		bkg_id = gs_bkg_id + 1;
+		bkg_id = gs_bkg_id;
 		bkg_size = gs_bkg_size;
 		bkg_id_offset = gs_bkg_id_offset;
 
@@ -193,7 +250,10 @@ static bool game_state_setup()
 		e_s = events_pos_parse(scn, SCR_WIDTH, SCR_HEIGHT);
 		if (e_s == NULL)
 			return false;
-		bkg = scale_surface(load_bmp(e_s->es1[gs_bkg_id].es2[0].id_str), SCR_WIDTH, SCR_HEIGHT);
+		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), SCR_WIDTH, SCR_HEIGHT);
+
+		//update the event system with the new bkg
+		event_bkg_id_update();
 	}
 
 	//offset it so we can centralise the bkg
@@ -344,52 +404,7 @@ static bool update_game_hitbox(bool go_back)
 			bkg_dest.y += ((SCR_HEIGHT - bkg->h) / 2);
 
 			if (!go_back)
-			{
-				switch (bkg_id)
-				{
-					case BKG_0_ID:
-					{
-						bkg_old_id = bkg_id;
-						bkg_old_size = bkg_size;
-						bkg_id = BKG_1_ID; 
-						bkg_size = BKG_1_SIZE; 
-						break;
-					}
-
-					case BKG_1_ID:
-					{
-						bkg_old_id = bkg_id;
-						bkg_old_size = bkg_size;
-						if (bkg_id_offset == 0){
-							bkg_id = BKG_3_ID; 
-							bkg_size = BKG_3_SIZE; 
-						}
-						else if (bkg_id_offset == 1){
-							bkg_id = BKG_2_ID; 
-							bkg_size = BKG_2_SIZE; 
-						}
-						break;
-					}
-
-					case BKG_2_ID:
-					{
-						bkg_old_id = bkg_id;
-						bkg_old_size = bkg_size;
-						bkg_id = BKG_3_ID; 
-						bkg_size = BKG_3_SIZE; 
-						break;
-					}
-
-					case BKG_3_ID:
-					{
-						//bkg_old_id = bkg_id;
-						//bkg_old_size = bkg_size;
-						//bkg_id = BKG_4_ID; 
-						//bkg_size = BKG_4_SIZE; 
-						break;
-					}
-				}
-			}
+				event_bkg_id_update();
 
 			SDL_Delay(GAME_DEFAULT_DELAY);
 			return true;
@@ -562,8 +577,8 @@ int main(int argc, char** argv)
 			gs_scene_id = 0;
 			//-1 because we start before the 0th bkg hence we need to jump back one frame
 			//no bkg_id_offset as this prevents the background from being loaded in array elem 0
-			gs_bkg_id = (bkg_id - 1);// + bkg_id_offset;
-			gs_bkg_size = bkg_size;
+			gs_bkg_id = bkg_old_id;
+			gs_bkg_size = bkg_old_size;
 			gs_bkg_id_offset = bkg_id_offset;
 			game_save();
 			save_game_flag = false;

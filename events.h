@@ -60,4 +60,8 @@ void events_pos_destroy(event_seq* e);
 #define BKG_3_ID (BKG_2_ID + BKG_2_SIZE)
 #define BKG_3_SIZE 2
 
+//the tunnels
+#define BKG_4_ID (BKG_3_ID + BKG_3_SIZE)
+#define BKG_4_SIZE 1
+
 #endif
