@@ -71,6 +71,7 @@ bool sub_event_first_time = true;
 //used to show which background is shown
 int bkg_id = BKG_0_ID;
 int bkg_id_offset = 0;
+int bkg_old_id_offset = bkg_id_offset;
 int bkg_sub_event_id = 0;
 int bkg_old_id = BKG_0_ID;
 //used for going backwards to the last frame... currently W.I.P (14/01/2020)
@@ -172,6 +173,7 @@ static void event_bkg_id_update()
 		{
 			bkg_old_id = bkg_id;
 			bkg_old_size = bkg_size;
+			bkg_old_id_offset = bkg_id_offset;
 			bkg_id = BKG_1_ID; 
 			bkg_size = BKG_1_SIZE; 
 			break;
@@ -181,6 +183,7 @@ static void event_bkg_id_update()
 		{
 			bkg_old_id = bkg_id;
 			bkg_old_size = bkg_size;
+			bkg_old_id_offset = bkg_id_offset;
 			if (bkg_id_offset == 0){
 				bkg_id = BKG_3_ID; 
 				bkg_size = BKG_3_SIZE; 
@@ -196,6 +199,7 @@ static void event_bkg_id_update()
 		{
 			bkg_old_id = bkg_id;
 			bkg_old_size = bkg_size;
+			bkg_old_id_offset = bkg_id_offset;
 			bkg_id = BKG_3_ID; 
 			bkg_size = BKG_3_SIZE; 
 			break;
@@ -205,6 +209,7 @@ static void event_bkg_id_update()
 		{
 			bkg_old_id = bkg_id;
 			bkg_old_size = bkg_size;
+			bkg_old_id_offset = bkg_id_offset;
 			bkg_id = BKG_4_ID; 
 			bkg_size = BKG_4_SIZE; 
 			break;
@@ -256,9 +261,10 @@ static bool game_state_setup()
 		if (e_s == NULL)
 			return false;
 		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), SCR_WIDTH, SCR_HEIGHT);
-
 		//update the event system with the new bkg
 		event_bkg_id_update();
+		//reset the id offset to begin the new sub events for the curr bkg
+		bkg_id_offset = 0;
 	}
 
 	//offset it so we can centralise the bkg
@@ -423,6 +429,7 @@ static bool game_hitbox_update(bool go_back)
 			event_text_col_number = e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].str_num_cols;
 			event_text = font_multicol_setup(font, 
 				e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, w, r, (SCR_WIDTH / 2), SCR_HEIGHT - 30, true);
+			sub_event_first_time = false;
 		}
 
 		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == SOUND_ID)
@@ -450,10 +457,12 @@ static bool game_hitbox_update(bool go_back)
 
 			Mix_PlayMusic(music, false);
 			music_playing_flag = true;
+			sub_event_first_time = false;
 		}
 
 		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == VIDEO_ID){
 			video_play2(scr, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, &sys_init);
+			sub_event_first_time = false;
 		}
 
 		return true;
@@ -644,7 +653,7 @@ int main(int argc, char** argv)
 			//no bkg_id_offset as this prevents the background from being loaded in array elem 0
 			gs_bkg_id = bkg_old_id;
 			gs_bkg_size = bkg_old_size;
-			gs_bkg_id_offset = bkg_id_offset;
+			gs_bkg_id_offset = bkg_old_id_offset;
 			game_save();
 			save_game_flag = false;
 		}
