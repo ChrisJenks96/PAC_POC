@@ -62,6 +62,11 @@ bool mouse_down = false;
 //prevents us from skipping the first scene when going from
 //main menu to the game (mouse down/up event hack)
 bool menu_game_flag = false;
+//if we hit a sub event but x amount of sub events need to run together
+//this flag ensures we render our shit out then go back to the next sub event
+bool sub_event_continue = false;
+#define DEFAULT_EVENT_DELAY 500
+bool sub_event_first_time = true;
 
 //used to show which background is shown
 int bkg_id = BKG_0_ID;
@@ -371,7 +376,7 @@ static void game_state_destroy()
 }
 
 //when we click on a game hitbox, we update everything
-static bool update_game_hitbox(bool go_back)
+static bool game_hitbox_update(bool go_back)
 {
 	//prevents it from being rendered if its equal to 0
 	event_text_len = 0;
@@ -406,8 +411,8 @@ static bool update_game_hitbox(bool go_back)
 			if (!go_back)
 				event_bkg_id_update();
 
+			sub_event_first_time = true;
 			SDL_Delay(GAME_DEFAULT_DELAY);
-			return true;
 		}
 
 		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == TEXT_ID)
@@ -418,7 +423,6 @@ static bool update_game_hitbox(bool go_back)
 			event_text_col_number = e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].str_num_cols;
 			event_text = font_multicol_setup(font, 
 				e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, w, r, (SCR_WIDTH / 2), SCR_HEIGHT - 30, true);
-			return true;
 		}
 
 		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == SOUND_ID)
@@ -446,14 +450,13 @@ static bool update_game_hitbox(bool go_back)
 
 			Mix_PlayMusic(music, false);
 			music_playing_flag = true;
-			return true;
 		}
 
 		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == VIDEO_ID){
 			video_play2(scr, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, &sys_init);
-			return true;
 		}
 
+		return true;
 	}
 
 	else
@@ -464,6 +467,33 @@ static bool update_game_hitbox(bool go_back)
 
 static void game_event_update()
 {
+	if (sub_event_continue)
+	{
+		SDL_Delay(DEFAULT_EVENT_DELAY);
+		//if we find it... run the sub events
+		if (bkg_sub_event_id < e_s->es1[bkg_id + bkg_id_offset].sub_events)
+		{
+			if (game_hitbox_update(false))
+			{
+				bkg_sub_event_id++;
+				if (bkg_sub_event_id >= e_s->es1[bkg_id + bkg_id_offset].sub_events)
+				{
+					sub_event_continue = false;
+					bkg_id_offset = 0;
+					bkg_sub_event_id = 0;
+				}
+			}
+		} 
+
+		else
+		{
+			//reset all becayuse we are done
+			sub_event_continue = false;
+			bkg_id_offset = 0;
+			bkg_sub_event_id = 0;
+		}
+	}
+
 	#ifdef _WIN32
 	if (e.type == SDL_MOUSEBUTTONDOWN)
 	#elif _PSP
@@ -484,7 +514,6 @@ static void game_event_update()
 			//check on the hitbox events
 			if (game_state == 1)
 			{
-				bkg_id_offset = 0, bkg_sub_event_id = 0;
 				bool go_back_flag = false;
 				//if we click at the bottom of the screen, we go backwards
 				/*if (mx >= 0 && mx <= SCR_WIDTH && 
@@ -506,12 +535,48 @@ static void game_event_update()
 						if (events_pos_update(&e_s->es1[bkg_id + bkg_id_offset], mx, my))
 						{
 							//if we find it... run the sub events
-							for (; bkg_sub_event_id < e_s->es1[bkg_id + bkg_id_offset].sub_events; bkg_sub_event_id++){
-								if (update_game_hitbox(false)){
-									found = true;
-									break;
+							if (bkg_sub_event_id < e_s->es1[bkg_id + bkg_id_offset].sub_events)
+							{
+								if (game_hitbox_update(false))
+								{
+									//we cannot proceed if we change the bkg (to the next scene), we need to cycle
+									//the render first to show the new bkg, then begin with the sub events
+									//this is triggered in 'game_hitbox_update' above
+									if (!sub_event_first_time)
+									{
+										//if the sub event is a next scene... do not continue cycling sub events
+										if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id != NEXT_SCENE_ID)
+										{
+											bkg_sub_event_id++;
+											found = true;
+											//check again... dont want to start +1 sub event on the next background
+											if (bkg_sub_event_id < e_s->es1[bkg_id + bkg_id_offset].sub_events)
+												sub_event_continue = true;
+											else
+											{
+												bkg_id_offset = 0;
+												bkg_sub_event_id = 0;
+											}
+										}
+
+										//if its a next scene sub event... reset all
+										else
+										{
+											bkg_sub_event_id = 0;
+											bkg_id_offset = 0;
+											found = true;
+										}
+									}
+
+									else
+									{
+										sub_event_first_time = false;
+										bkg_sub_event_id = 0;
+										bkg_id_offset = 0;
+										found = true;
+									}
 								}
-							}
+							} 
 						}
 
 						if (found)

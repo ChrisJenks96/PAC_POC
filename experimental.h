@@ -39,7 +39,7 @@ static inline int _strlen(const char* s)
 				jnz _strlen_loop //loop round again...
 
 			mov eax, esi
-			mov l, esi //return count
+			mov l, eax //return count
 		}
 	#else 
 		l = strlen(s);
