@@ -15,7 +15,7 @@ char* scene_list()
 			//s = NULL;
 			//break;
 		case 0:
-			strcpy(&scn[0], "scenes/scene_1.events");
+			strcpy(&scn[0], "scenes.events");
 			scn[_strlen(scn)] = 0;
 			break;
 		default:

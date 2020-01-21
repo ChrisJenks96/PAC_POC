@@ -39,7 +39,7 @@ bool mm_font_setup_surface(TTF_Font* f, SDL_Surface* scr, int font_size, char* t
 	}
 }
 
-void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size)
+void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size, float ratio)
 {
 	font_select_id = -1;
 
@@ -50,7 +50,7 @@ void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size)
 	SDL_BlitSurface(grad_bkg, NULL, scr, &grad_bkg_dest);
 
 	//render fonts 	
-	font_select_id = mm_font_setup_surface(f, scr, font_size, "New Game", 50) == 1 ? 0 : font_select_id;
+	font_select_id = mm_font_setup_surface(f, scr, font_size, "New Game", 50 * ratio) == 1 ? 0 : font_select_id;
 	SDL_BlitSurface(s, NULL, scr, &r1);
 	SDL_FreeSurface(s);
 
@@ -58,7 +58,7 @@ void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size)
 	SDL_BlitSurface(s, NULL, scr, &r1);
 	SDL_FreeSurface(s);
 
-	font_select_id = mm_font_setup_surface(f, scr, font_size, "Exit Game", -50) == 1 ? 2 : font_select_id;
+	font_select_id = mm_font_setup_surface(f, scr, font_size, "Exit Game", -50 * ratio) == 1 ? 2 : font_select_id;
 	SDL_BlitSurface(s, NULL, scr, &r1);
 	SDL_FreeSurface(s);
 }

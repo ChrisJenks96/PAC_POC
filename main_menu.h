@@ -22,7 +22,7 @@ extern SDL_Surface* grad_bkg;
 
 void main_menu_setup(SDL_Surface* scr);
 bool mm_font_setup_surface(TTF_Font* f, SDL_Surface* scr, int font_size, char* txt, int y_offset);
-void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size);
+void main_menu_render(TTF_Font* f, SDL_Surface* scr, int font_size, float ratio);
 void main_menu_destroy();
 
 #endif

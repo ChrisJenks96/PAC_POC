@@ -1,5 +1,121 @@
 #include "events.h"
 
+void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_offset,
+	int* bkg_id, int* bkg_size, int* bkg_id_offset)
+{
+	switch (*bkg_id)
+	{
+		case BKG_0_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_old_id_offset = *bkg_id_offset;
+			*bkg_id = BKG_1_ID; 
+			*bkg_size = BKG_1_SIZE; 
+			break;
+		}
+
+		case BKG_1_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_old_id_offset = *bkg_id_offset;
+			if (*bkg_id_offset == 0){
+				*bkg_id = BKG_3_ID; 
+				*bkg_size = BKG_3_SIZE; 
+			}
+			else if (*bkg_id_offset == 1){
+				*bkg_id = BKG_2_ID; 
+				*bkg_size = BKG_2_SIZE; 
+			}
+			break;
+		}
+
+		case BKG_2_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_old_id_offset = *bkg_id_offset;
+			*bkg_id = BKG_3_ID; 
+			*bkg_size = BKG_3_SIZE; 
+			break;
+		}
+
+		case BKG_3_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_old_id_offset = *bkg_id_offset;
+			*bkg_id = BKG_4_ID; 
+			*bkg_size = BKG_4_SIZE; 
+			break;
+		}
+
+		case BKG_4_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_id = BKG_5_ID; 
+			*bkg_size = BKG_5_SIZE; 
+			break;
+		}
+
+		case BKG_5_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_id = BKG_6_ID; 
+			*bkg_size = BKG_6_SIZE; 
+			break;
+		}
+
+		case BKG_6_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_id = BKG_7_ID; 
+			*bkg_size = BKG_7_SIZE; 
+			break;
+		}
+
+		case BKG_7_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_id = BKG_8_ID; 
+			*bkg_size = BKG_8_SIZE; 
+			break;
+		}
+
+		case BKG_8_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_id = BKG_9_ID; 
+			*bkg_size = BKG_9_SIZE; 
+			break;
+		}
+
+		case BKG_9_ID:
+		{
+			*bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_id = BKG_10_ID; 
+			*bkg_size = BKG_10_SIZE; 
+			break;
+		}
+
+		case BKG_10_ID:
+		{
+			/**bkg_old_id = *bkg_id;
+			*bkg_old_size = *bkg_size;
+			*bkg_id = BKG_6_ID; 
+			*bkg_size = BKG_6_SIZE;*/
+			break;
+		}
+	}
+}
+
 event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
 {
 	FILE* f;

@@ -7,8 +7,6 @@
 	#define SCR_HEIGHT 600
 	#define SCR_BPP 32
 	#define SCR_SURF_MODE SDL_SWSURFACE
-
-	#define FONT_SIZE 20
 #else
 	#include <pspkernel.h>
 	#include <pspgu.h>
@@ -24,8 +22,6 @@
 	#define SCR_HEIGHT 272
 	#define SCR_BPP 32
 	#define SCR_SURF_MODE SDL_SWSURFACE
-
-	#define FONT_SIZE 14
 
 	#define printf pspDebugScreenPrintf
 
@@ -65,9 +61,11 @@ bool menu_game_flag = false;
 //if we hit a sub event but x amount of sub events need to run together
 //this flag ensures we render our shit out then go back to the next sub event
 bool sub_event_continue = false;
-#define DEFAULT_EVENT_DELAY 500
+#define DEFAULT_EVENT_DELAY 250
 bool sub_event_first_time = true;
-
+//global font size
+int font_size;
+float font_ratio;
 //used to show which background is shown
 int bkg_id = BKG_0_ID;
 int bkg_id_offset = 0;
@@ -82,6 +80,10 @@ SDL_Rect bkg_dest;
 SDL_Surface* bkg, *cursor, *test;
 font_surface* event_text = NULL;
 int event_text_len = 0;
+
+//how long is it on the screen for...
+#define EVENT_TEXT_DELAY 1.2f
+float event_text_time = 0.0f;
 //number of cols in text
 int event_text_col_number = 0;
 //test... change me
@@ -143,7 +145,15 @@ static bool general_state_setup()
 	int err = TTF_Init();
 	if (err == -1)
 		return false;
-	font = TTF_OpenFont("Chapaza.ttf", FONT_SIZE);
+
+	#ifdef _WIN32
+		font_ratio = (float)SCR_WIDTH / 800.0f;
+		font_size = (int)(20.0f * font_ratio);
+	#elif _PSP
+		font_ratio = (float)SCR_WIDTH / 480.0f;
+		font_size = (int)(14.0f * font_ratio);
+	#endif
+	font = TTF_OpenFont("Chapaza.ttf", font_size);
 	if (font == NULL)
 		return false;
 
@@ -162,68 +172,7 @@ static bool general_state_setup()
 
 static void main_menu_state_update()
 {
-	main_menu_render(font, scr, FONT_SIZE);
-}
-
-static void event_bkg_id_update()
-{
-	switch (bkg_id)
-	{
-		case BKG_0_ID:
-		{
-			bkg_old_id = bkg_id;
-			bkg_old_size = bkg_size;
-			bkg_old_id_offset = bkg_id_offset;
-			bkg_id = BKG_1_ID; 
-			bkg_size = BKG_1_SIZE; 
-			break;
-		}
-
-		case BKG_1_ID:
-		{
-			bkg_old_id = bkg_id;
-			bkg_old_size = bkg_size;
-			bkg_old_id_offset = bkg_id_offset;
-			if (bkg_id_offset == 0){
-				bkg_id = BKG_3_ID; 
-				bkg_size = BKG_3_SIZE; 
-			}
-			else if (bkg_id_offset == 1){
-				bkg_id = BKG_2_ID; 
-				bkg_size = BKG_2_SIZE; 
-			}
-			break;
-		}
-
-		case BKG_2_ID:
-		{
-			bkg_old_id = bkg_id;
-			bkg_old_size = bkg_size;
-			bkg_old_id_offset = bkg_id_offset;
-			bkg_id = BKG_3_ID; 
-			bkg_size = BKG_3_SIZE; 
-			break;
-		}
-
-		case BKG_3_ID:
-		{
-			bkg_old_id = bkg_id;
-			bkg_old_size = bkg_size;
-			bkg_old_id_offset = bkg_id_offset;
-			bkg_id = BKG_4_ID; 
-			bkg_size = BKG_4_SIZE; 
-			break;
-		}
-
-		case BKG_4_ID:
-		{
-			//bkg_old_id = bkg_id;
-			//bkg_old_size = bkg_size;
-			//bkg_id = BKG_4_ID; 
-			//bkg_size = BKG_4_SIZE; 
-			break;
-		}
-	}
+	main_menu_render(font, scr, font_size, font_ratio);
 }
 
 static bool game_state_setup()
@@ -243,7 +192,7 @@ static bool game_state_setup()
 
 	if (game_start_state == GS_NEW_GAME){
 		//load event data in for current frame
-		e_s = events_pos_parse("scenes/scene_1.events", SCR_WIDTH, SCR_HEIGHT);
+		e_s = events_pos_parse("scenes.events", SCR_WIDTH, SCR_HEIGHT);
 		if (e_s == NULL)
 			return false;
 		bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
@@ -262,7 +211,8 @@ static bool game_state_setup()
 			return false;
 		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), SCR_WIDTH, SCR_HEIGHT);
 		//update the event system with the new bkg
-		event_bkg_id_update();
+		event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
+			&bkg_id, &bkg_size, &bkg_id_offset);
 		//reset the id offset to begin the new sub events for the curr bkg
 		bkg_id_offset = 0;
 	}
@@ -415,7 +365,8 @@ static bool game_hitbox_update(bool go_back)
 			bkg_dest.y += ((SCR_HEIGHT - bkg->h) / 2);
 
 			if (!go_back)
-				event_bkg_id_update();
+				event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
+					&bkg_id, &bkg_size, &bkg_id_offset);
 
 			sub_event_first_time = true;
 			SDL_Delay(GAME_DEFAULT_DELAY);
@@ -616,6 +567,8 @@ int main(int argc, char** argv)
 		len = strlen("test");
 		c2 = GetCounter();
 		printf("c2:%f\n", c2);
+
+		_test1();
 	#endif
 
 	if (!general_state_setup())
@@ -743,7 +696,16 @@ int main(int argc, char** argv)
 
 		//always render cursor last
 		if (event_text_len != 0)
+		{
 			font_multicol_render(scr, event_text, event_text_col_number);
+			event_text_time += delta_time;
+			if (event_text_time > EVENT_TEXT_DELAY)
+			{
+				event_text_len = 0;
+				event_text_time = 0.0f;
+			}
+		}
+
 		SDL_BlitSurface(cursor, NULL, scr, &cursor_dest);
 
 		SDL_Flip(scr);

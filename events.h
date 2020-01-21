@@ -39,29 +39,67 @@ typedef struct event_seq
 	event_seq_child* es1;
 } event_seq;
 
+void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_offset,
+	int* bkg_id, int* bkg_size, int* bkg_id_offset);
 event_seq* events_pos_parse(char* fn, int scr_w, int scr_h);
 bool events_pos_update(event_seq_child* e, int mx, int my);
 void events_pos_destroy(event_seq* e);
 
 //game code
+
+//main_camera_1
 //start zone looking at house, truck
 #define BKG_0_ID 0
 #define BKG_0_SIZE 1
 
+//main_camera_1_1
 //looking further in
 #define BKG_1_ID (BKG_0_ID + BKG_0_SIZE)
 #define BKG_1_SIZE 2
 
+//main_camera_1_2
 //truck cockpit and fuel
 #define BKG_2_ID (BKG_1_ID + BKG_1_SIZE)
 #define BKG_2_SIZE 2
 
+//main_camera_1_3
 //the house
 #define BKG_3_ID (BKG_2_ID + BKG_2_SIZE)
 #define BKG_3_SIZE 2
 
-//the tunnels
+//main_camera_2
+//entrance to the big cave through the house
 #define BKG_4_ID (BKG_3_ID + BKG_3_SIZE)
 #define BKG_4_SIZE 1
+
+//main_camera_2_1
+//moving in on the portable lift
+#define BKG_5_ID (BKG_4_ID + BKG_4_SIZE)
+#define BKG_5_SIZE 1
+
+//main_camera_2_2
+//moving in on the portable lift (again)
+#define BKG_6_ID (BKG_5_ID + BKG_5_SIZE)
+#define BKG_6_SIZE 1
+
+//main_camera_2_3
+//emergency buttons
+#define BKG_7_ID (BKG_6_ID + BKG_6_SIZE)
+#define BKG_7_SIZE 1
+
+//main_camera_2_4
+//step onto the portable lift
+#define BKG_8_ID (BKG_7_ID + BKG_7_SIZE)
+#define BKG_8_SIZE 1
+
+//main_camera_2_5
+//got to the top of the cave on the lift
+#define BKG_9_ID (BKG_8_ID + BKG_8_SIZE)
+#define BKG_9_SIZE 1
+
+//main_camera_2_6
+//got to the top of the cave on the lift
+#define BKG_10_ID (BKG_9_ID + BKG_9_SIZE)
+#define BKG_10_SIZE 1
 
 #endif
