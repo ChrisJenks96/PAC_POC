@@ -41,7 +41,8 @@ typedef struct event_seq
 
 void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_offset,
 	int* bkg_id, int* bkg_size, int* bkg_id_offset);
-event_seq* events_pos_parse(char* fn, int scr_w, int scr_h);
+event_seq* events_pos_parse(char* fn, int scr_w, int scr_h, 
+	int tex_w, int tex_h, int offset_x, int offset_y);
 bool events_pos_update(event_seq_child* e, int mx, int my);
 void events_pos_destroy(event_seq* e);
 

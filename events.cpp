@@ -3,13 +3,15 @@
 void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_offset,
 	int* bkg_id, int* bkg_size, int* bkg_id_offset)
 {
+	//update ids and log old ids
+	*bkg_old_id = *bkg_id;
+	*bkg_old_size = *bkg_size;
+	*bkg_old_id_offset = *bkg_id_offset;
+
 	switch (*bkg_id)
 	{
 		case BKG_0_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
-			*bkg_old_id_offset = *bkg_id_offset;
 			*bkg_id = BKG_1_ID; 
 			*bkg_size = BKG_1_SIZE; 
 			break;
@@ -17,9 +19,6 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_1_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
-			*bkg_old_id_offset = *bkg_id_offset;
 			if (*bkg_id_offset == 0){
 				*bkg_id = BKG_3_ID; 
 				*bkg_size = BKG_3_SIZE; 
@@ -33,9 +32,6 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_2_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
-			*bkg_old_id_offset = *bkg_id_offset;
 			*bkg_id = BKG_3_ID; 
 			*bkg_size = BKG_3_SIZE; 
 			break;
@@ -43,9 +39,6 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_3_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
-			*bkg_old_id_offset = *bkg_id_offset;
 			*bkg_id = BKG_4_ID; 
 			*bkg_size = BKG_4_SIZE; 
 			break;
@@ -53,8 +46,6 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_4_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
 			*bkg_id = BKG_5_ID; 
 			*bkg_size = BKG_5_SIZE; 
 			break;
@@ -62,8 +53,6 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_5_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
 			*bkg_id = BKG_6_ID; 
 			*bkg_size = BKG_6_SIZE; 
 			break;
@@ -71,17 +60,13 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_6_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
-			*bkg_id = BKG_7_ID; 
-			*bkg_size = BKG_7_SIZE; 
+			//*bkg_id = BKG_7_ID; 
+			//*bkg_size = BKG_7_SIZE; 
 			break;
 		}
 
 		case BKG_7_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
 			*bkg_id = BKG_8_ID; 
 			*bkg_size = BKG_8_SIZE; 
 			break;
@@ -89,8 +74,6 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_8_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
 			*bkg_id = BKG_9_ID; 
 			*bkg_size = BKG_9_SIZE; 
 			break;
@@ -98,8 +81,6 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_9_ID:
 		{
-			*bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
 			*bkg_id = BKG_10_ID; 
 			*bkg_size = BKG_10_SIZE; 
 			break;
@@ -107,8 +88,7 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_10_ID:
 		{
-			/**bkg_old_id = *bkg_id;
-			*bkg_old_size = *bkg_size;
+			/*
 			*bkg_id = BKG_6_ID; 
 			*bkg_size = BKG_6_SIZE;*/
 			break;
@@ -116,7 +96,7 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 	}
 }
 
-event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
+event_seq* events_pos_parse(char* fn, int scr_w, int scr_h, int tex_w, int tex_h, int offset_x, int offset_y)
 {
 	FILE* f;
 	int curr_event = 0, index = 0, i, j;
@@ -147,10 +127,12 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h)
 					
 					//adapt coordinates for different platforms
 					//all coordinates are based off the 800 x 600 default
-					float new_coord_x = (float)((float)scr_w / 800.0f); 
-					float new_coord_y = (float)((float)scr_h / 600.0f); 
+					float new_coord_x = (float)((float)tex_w / 800.0f); 
+					float new_coord_y = (float)((float)tex_h / 600.0f); 
 					e->es1[index].pos_x *= new_coord_x;
+					e->es1[index].pos_x += offset_x;
 					e->es1[index].pos_y *= new_coord_y;
+					e->es1[index].pos_y += offset_y;
 					e->es1[index].size_x *= new_coord_x;
 					e->es1[index].size_y *= new_coord_y;
 
@@ -218,6 +200,8 @@ void events_pos_destroy(event_seq* e)
 
 bool events_pos_update(event_seq_child* e, int mx, int my)
 {
+	//0 800 0 600
+	//
 	if (mx >= (e->pos_x) && mx <= (e->pos_x + e->size_x)){
 		if (my >= (e->pos_y) && my <= (e->pos_y + e->size_y)){
 			return true;

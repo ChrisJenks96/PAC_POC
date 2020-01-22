@@ -5,6 +5,8 @@
 
 	#define SCR_WIDTH 800
 	#define SCR_HEIGHT 600
+	#define TEX_WIDTH 800
+	#define TEX_HEIGHT 600
 	#define SCR_BPP 32
 	#define SCR_SURF_MODE SDL_SWSURFACE
 #else
@@ -20,6 +22,8 @@
 
 	#define SCR_WIDTH 480
 	#define SCR_HEIGHT 272
+	#define TEX_WIDTH 360
+	#define TEX_HEIGHT 272
 	#define SCR_BPP 32
 	#define SCR_SURF_MODE SDL_SWSURFACE
 
@@ -76,7 +80,7 @@ int bkg_old_id = BKG_0_ID;
 int bkg_size = BKG_0_SIZE;
 int bkg_old_size = BKG_0_SIZE;
 //the final dest of the bkg surface
-SDL_Rect bkg_dest;
+static SDL_Rect bkg_dest = {(Sint16)((SCR_WIDTH - TEX_WIDTH) / 2), (Sint16)((SCR_HEIGHT - TEX_HEIGHT) / 2), 0, 0};
 SDL_Surface* bkg, *cursor, *test;
 font_surface* event_text = NULL;
 int event_text_len = 0;
@@ -124,7 +128,7 @@ static void sys_init()
 static bool main_menu_state_setup()
 {
 	//setup main menu
-	main_menu_setup(scr);
+	main_menu_setup(scr, TEX_WIDTH, TEX_HEIGHT);
 	return true;
 }
 
@@ -192,10 +196,11 @@ static bool game_state_setup()
 
 	if (game_start_state == GS_NEW_GAME){
 		//load event data in for current frame
-		e_s = events_pos_parse("scenes.events", SCR_WIDTH, SCR_HEIGHT);
+		e_s = events_pos_parse("scenes.events", SCR_WIDTH, SCR_HEIGHT, 
+			TEX_WIDTH, TEX_HEIGHT, bkg_dest.x, bkg_dest.y);
 		if (e_s == NULL)
 			return false;
-		bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
+		bkg = scale_surface(load_bmp("main_camera_1.bmp"), TEX_WIDTH, TEX_HEIGHT);
 	}
 
 	else if (game_start_state == GS_LOAD_GAME)
@@ -206,20 +211,17 @@ static bool game_state_setup()
 		bkg_id_offset = gs_bkg_id_offset;
 
 		//load event data in for current frame
-		e_s = events_pos_parse(scn, SCR_WIDTH, SCR_HEIGHT);
+		e_s = events_pos_parse(scn, SCR_WIDTH, SCR_HEIGHT, 
+			TEX_WIDTH, TEX_HEIGHT, bkg_dest.x, bkg_dest.y);
 		if (e_s == NULL)
 			return false;
-		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), SCR_WIDTH, SCR_HEIGHT);
+		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), TEX_WIDTH, TEX_HEIGHT);
 		//update the event system with the new bkg
 		event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
 			&bkg_id, &bkg_size, &bkg_id_offset);
 		//reset the id offset to begin the new sub events for the curr bkg
 		bkg_id_offset = 0;
 	}
-
-	//offset it so we can centralise the bkg
-	bkg_dest.x = (Sint16)((SCR_WIDTH - bkg->w) / 2);
-	bkg_dest.y = (Sint16)((SCR_HEIGHT - bkg->h) / 2);
 
 	//load scooter animation in
 	//scoot_anim = load_bmp(SCOOTER_FILE_NAME);
@@ -356,13 +358,9 @@ static bool game_hitbox_update(bool go_back)
 			SDL_FreeSurface(bkg);
 			//the first shot of the game is not part of the script (05/01/2020)
 			if ((bkg_id + bkg_id_offset) == 0 && go_back)
-				bkg = scale_surface(load_bmp("main_camera_1.bmp"), SCR_WIDTH, SCR_HEIGHT);
+				bkg = scale_surface(load_bmp("main_camera_1.bmp"), TEX_WIDTH, TEX_HEIGHT);
 			else
-				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), SCR_WIDTH, SCR_HEIGHT);
-
-			//offset it so we can centralise the bkg
-			bkg_dest.x += ((SCR_WIDTH - bkg->w) / 2);
-			bkg_dest.y += ((SCR_HEIGHT - bkg->h) / 2);
+				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
 
 			if (!go_back)
 				event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
@@ -610,6 +608,10 @@ int main(int argc, char** argv)
 			game_save();
 			save_game_flag = false;
 		}
+
+		//refresh if the screen doesnt match tex size (for cursor movement)
+		if (SCR_WIDTH != TEX_WIDTH || SCR_HEIGHT != TEX_HEIGHT)
+			SDL_FillRect(scr, NULL, 0x000000);
 
 		//events
 		#ifdef _WIN32

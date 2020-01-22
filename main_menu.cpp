@@ -9,9 +9,9 @@ SDL_Surface* s;
 SDL_Rect grad_bkg_dest;
 SDL_Surface* grad_bkg;
 
-void main_menu_setup(SDL_Surface* scr)
+void main_menu_setup(SDL_Surface* scr, int tw, int th)
 {
-	grad_bkg = scale_surface(load_bmp("mm_bkg.bmp"), scr->w, scr->h);
+	grad_bkg = scale_surface(load_bmp("mm_bkg.bmp"), tw, th);
 }
 
 bool mm_font_setup_surface(TTF_Font* f, SDL_Surface* scr, int font_size, char* txt, int y_offset)
