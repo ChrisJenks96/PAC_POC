@@ -38,7 +38,9 @@ typedef struct event_seq
 	int num_events;
 	event_seq_child* es1;
 } event_seq;
-
+//used to go back to the last screen we were on
+void event_bkg_id_revert(int* bkg_id, int* bkg_size, int* bkg_id_offset, int* bkg_sub_event_id);
+//used to progress forwards into the game
 void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_offset,
 	int* bkg_id, int* bkg_size, int* bkg_id_offset);
 event_seq* events_pos_parse(char* fn, int scr_w, int scr_h, 

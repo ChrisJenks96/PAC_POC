@@ -1,5 +1,88 @@
 #include "events.h"
 
+void event_bkg_id_revert(int* bkg_id, int* bkg_size, int* bkg_id_offset, int* bkg_sub_event_id)
+{
+	switch (*bkg_id)
+	{
+		case BKG_0_ID:
+		{
+			break;
+		}
+
+		case BKG_1_ID:
+		{
+			*bkg_id = BKG_0_ID; 
+			*bkg_size = BKG_0_SIZE; 
+			break;
+		}
+
+		case BKG_2_ID:
+		{
+			*bkg_id = BKG_0_ID; 
+			*bkg_size = BKG_0_SIZE; 
+			break;
+		}
+
+		case BKG_3_ID:
+		{
+			*bkg_id = BKG_0_ID; 
+			*bkg_size = BKG_0_SIZE; 
+			break;
+		}
+
+		case BKG_4_ID:
+		{
+			*bkg_id = BKG_1_ID; 
+			*bkg_size = BKG_1_SIZE;
+			break;
+		}
+
+		case BKG_5_ID:
+		{
+			*bkg_id = BKG_3_ID; 
+			*bkg_size = BKG_3_SIZE; 
+			//text first then bkg
+			*bkg_sub_event_id = 1;
+			break;
+		}
+
+		case BKG_6_ID:
+		{
+			*bkg_id = BKG_4_ID; 
+			*bkg_size = BKG_4_SIZE; 
+			break;
+		}
+
+		case BKG_7_ID:
+		{
+			*bkg_id = BKG_5_ID; 
+			*bkg_size = BKG_5_SIZE; 
+			break;
+		}
+
+		case BKG_8_ID:
+		{
+			*bkg_id = BKG_6_ID; 
+			*bkg_size = BKG_6_SIZE; 
+			break;
+		}
+
+		case BKG_9_ID:
+		{
+			*bkg_id = BKG_7_ID; 
+			*bkg_size = BKG_7_SIZE; 
+			break;
+		}
+
+		case BKG_10_ID:
+		{
+			*bkg_id = BKG_8_ID; 
+			*bkg_size = BKG_8_SIZE;
+			break;
+		}
+	}
+}
+
 void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_offset,
 	int* bkg_id, int* bkg_size, int* bkg_id_offset)
 {
@@ -60,8 +143,8 @@ void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_off
 
 		case BKG_6_ID:
 		{
-			//*bkg_id = BKG_7_ID; 
-			//*bkg_size = BKG_7_SIZE; 
+			*bkg_id = BKG_7_ID; 
+			*bkg_size = BKG_7_SIZE; 
 			break;
 		}
 

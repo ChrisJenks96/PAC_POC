@@ -76,6 +76,8 @@ int bkg_id_offset = 0;
 int bkg_old_id_offset = bkg_id_offset;
 int bkg_sub_event_id = 0;
 int bkg_old_id = BKG_0_ID;
+//the first bkg we point too
+static char* bkg_start = "main_camera_1.bmp";
 //used for going backwards to the last frame... currently W.I.P (14/01/2020)
 int bkg_size = BKG_0_SIZE;
 int bkg_old_size = BKG_0_SIZE;
@@ -200,7 +202,7 @@ static bool game_state_setup()
 			TEX_WIDTH, TEX_HEIGHT, bkg_dest.x, bkg_dest.y);
 		if (e_s == NULL)
 			return false;
-		bkg = scale_surface(load_bmp("main_camera_1.bmp"), TEX_WIDTH, TEX_HEIGHT);
+		bkg = scale_surface(load_bmp(bkg_start), TEX_WIDTH, TEX_HEIGHT);
 	}
 
 	else if (game_start_state == GS_LOAD_GAME)
@@ -216,6 +218,13 @@ static bool game_state_setup()
 		if (e_s == NULL)
 			return false;
 		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), TEX_WIDTH, TEX_HEIGHT);
+		
+		//FIX THIS ON LOAD GAME
+		//back the old name up
+		//bkg_names[1] = bkg_start;
+		//update the name of the current background
+		//bkg_names[0] = e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str;
+
 		//update the event system with the new bkg
 		event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
 			&bkg_id, &bkg_size, &bkg_id_offset);
@@ -358,11 +367,14 @@ static bool game_hitbox_update(bool go_back)
 			SDL_FreeSurface(bkg);
 			//the first shot of the game is not part of the script (05/01/2020)
 			if ((bkg_id + bkg_id_offset) == 0 && go_back)
-				bkg = scale_surface(load_bmp("main_camera_1.bmp"), TEX_WIDTH, TEX_HEIGHT);
+				bkg = scale_surface(load_bmp(bkg_start), TEX_WIDTH, TEX_HEIGHT);
 			else
 				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+			
+			if (go_back)
+				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
 
-			if (!go_back)
+			else
 				event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
 					&bkg_id, &bkg_size, &bkg_id_offset);
 
@@ -474,15 +486,25 @@ static void game_event_update()
 			{
 				bool go_back_flag = false;
 				//if we click at the bottom of the screen, we go backwards
-				/*if (mx >= 0 && mx <= SCR_WIDTH && 
+				if (mx >= 0 && mx <= SCR_WIDTH && 
 					my >= (SCR_HEIGHT - 20) && my <= SCR_HEIGHT)
 				{
-					//reset to old screen settings
-					bkg_id = bkg_old_id;
-					bkg_size = bkg_old_size;
-					if (update_game_hitbox(i, j, true))
-						go_back_flag = true;
-				}*/
+					int i;
+					//revert the events
+					event_bkg_id_revert(&bkg_id, &bkg_size, &bkg_id_offset, &bkg_sub_event_id);
+					//reset the events done
+					for (i = 0; i < e_s->es1[bkg_id + bkg_id_offset].sub_events; i++)
+						e_s->es1[bkg_id + bkg_id_offset].es2[i].done = false;
+					SDL_FreeSurface(bkg);
+					bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+					//reset the sub event to 0
+					bkg_sub_event_id = 0;
+					//resync events with new id's
+					event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset, &bkg_id, &bkg_size, &bkg_id_offset);
+					//prevent us from running the normal event loop afterwards..
+					go_back_flag = true;
+					SDL_Delay(DEFAULT_EVENT_DELAY);
+				}
 
 				if (!go_back_flag && menu_game_flag)
 				{
