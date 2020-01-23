@@ -199,7 +199,7 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h, int tex_w, int tex_h
 		{
 			fgets(buff, 128, f);
 			sscanf(buff, "%s %i", &empty[0], &curr_event);
-			if (strcmp(buff, "\r\n") != 0)
+			if ((strcmp(buff, "\r\n") != 0))
 			{
 				e->num_events += curr_event;
 				for (i = 0; i < curr_event; i++)

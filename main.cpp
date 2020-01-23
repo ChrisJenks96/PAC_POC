@@ -95,6 +95,8 @@ int event_text_col_number = 0;
 //test... change me
 event_seq* e_s = NULL;
 
+font_surface* debug;
+
 //game specific code
 /*#define SCOOTER_EVENTS_NUM 1
 #define SCOOTER_EVENTS_FILE_NAME "SCOOT_EVENTS"
@@ -173,6 +175,8 @@ static bool general_state_setup()
 	SDL_SetColorKey(cursor, SDL_SRCCOLORKEY, SDL_MapRGB(cursor->format, 36, 149, 180));
 	cursor_dest.h = cursor->h;
 	cursor_dest.w = cursor->w;
+
+	debug = font_multicol_setup(font, "<w>NULL<w>", font_c_highlight, font_c_unhighlight, 10, 10, false);
 	return true;
 }
 
@@ -332,6 +336,7 @@ static void main_menu_state_destroy()
 
 static void game_state_destroy()
 {
+	font_multicol_destroy(debug, 1);
 	inventory_destroy();
 	events_pos_destroy(e_s);
 	font_multicol_destroy(event_text, event_text_col_number);
@@ -360,6 +365,20 @@ static bool game_hitbox_update(bool go_back)
 
 	if (!e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].done)
 	{
+		char debug_buff[128];
+		if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id != TEXT_ID){
+			strcpy(&debug_buff[0], "<w>");
+			strcpy(&debug_buff[_strlen(debug_buff)], e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
+			strcpy(&debug_buff[_strlen(debug_buff)], "<w>");
+		}
+
+		else
+			strcpy(&debug_buff[0], "<w>Text ID - NULL<w>");
+		//debug text for outputting shite
+		font_multicol_destroy(debug, 1);
+		debug = font_multicol_setup(font, debug_buff, font_c_highlight, font_c_unhighlight, 10, 10, false);
+
+
 		//make sure the event is now done so we can move on to the next one
 		e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].done = true;
 		if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == NEXT_SCENE_ID)
@@ -729,6 +748,8 @@ int main(int argc, char** argv)
 				event_text_time = 0.0f;
 			}
 		}
+
+		font_multicol_render(scr, debug, 1);
 
 		SDL_BlitSurface(cursor, NULL, scr, &cursor_dest);
 

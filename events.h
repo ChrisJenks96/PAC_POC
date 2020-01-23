@@ -83,7 +83,7 @@ void events_pos_destroy(event_seq* e);
 //main_camera_2_2
 //moving in on the portable lift (again)
 #define BKG_6_ID (BKG_5_ID + BKG_5_SIZE)
-#define BKG_6_SIZE 1
+#define BKG_6_SIZE 2
 
 //main_camera_2_3
 //emergency buttons
