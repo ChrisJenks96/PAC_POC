@@ -1,0 +1,5 @@
+1
+lift_power_up 1
+inv key_1 208 414 43 52 2
+next_bkg main_camera_2_4.bmp main_camera_2_41.bmp
+next_bkg main_camera_2_3.bmp main_camera_2_31.bmp

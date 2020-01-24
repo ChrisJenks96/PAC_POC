@@ -4,29 +4,14 @@
 #include <stdio.h>
 #include <stdint.h>
 
-//example layout
-static inline uint16_t _increment(uint16_t n, uint16_t n2)
-{
-	#ifdef _WIN32
-		uint16_t data;
-		__asm
-		{
-			mov dx, n
-			add dx, n2
-			mov data, dx
-		}
-		return data;
-	#else
-		return 0;
-	#endif
-}
+#define _ASM
 
 //https://stackoverflow.com/questions/25796257/trying-to-figure-out-masm-syntax
 static inline int _strlen(const char* s)
 {
 	int l;
-
 	#ifdef _WIN32
+	#ifdef _ASM
 		_asm
 		{
 			mov eax, s //move address of the string into eax reg
@@ -41,7 +26,8 @@ static inline int _strlen(const char* s)
 			mov eax, esi
 			mov l, eax //return count
 		}
-	#else 
+	#endif
+	#else
 		l = strlen(s);
 	#endif
 	return l;
@@ -50,6 +36,7 @@ static inline int _strlen(const char* s)
 static inline void _test1()
 {
 	#ifdef _WIN32
+	#ifdef _ASM
 		_asm
 		{
 			//adventurous (not fastest) way of going from 15 to 9
@@ -68,6 +55,7 @@ static inline void _test1()
 			mov AL, 080h //1000 0000 //0000 0101
 			xor AL, 085h //1000 0101
 		}
+	#endif
 	#endif
 	return;
 }

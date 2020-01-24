@@ -41,7 +41,7 @@
 #include "events.h"
 #include "save.h"
 #include "video.h"
-
+#include "puzzles.h"
 #include "experimental.h"
 
 //main shit
@@ -94,6 +94,9 @@ float event_text_time = 0.0f;
 int event_text_col_number = 0;
 //test... change me
 event_seq* e_s = NULL;
+
+//puzzles for the game
+puzzle_seq* p_s = NULL;
 
 font_surface* debug;
 
@@ -200,11 +203,17 @@ static bool game_state_setup()
 		}
 	}
 
-	if (game_start_state == GS_NEW_GAME){
+	if (game_start_state == GS_NEW_GAME)
+	{
 		//load event data in for current frame
 		e_s = events_pos_parse("scenes.events", SCR_WIDTH, SCR_HEIGHT, 
 			TEX_WIDTH, TEX_HEIGHT, bkg_dest.x, bkg_dest.y);
 		if (e_s == NULL)
+			return false;
+		//load in the puzzles for the game
+		p_s = puzzle_event_parse("puzzles.events", SCR_WIDTH, SCR_HEIGHT, 
+			TEX_WIDTH, TEX_HEIGHT, bkg_dest.x, bkg_dest.y);
+		if (p_s == NULL)
 			return false;
 		bkg = scale_surface(load_bmp(bkg_start), TEX_WIDTH, TEX_HEIGHT);
 	}
@@ -220,6 +229,11 @@ static bool game_state_setup()
 		e_s = events_pos_parse(scn, SCR_WIDTH, SCR_HEIGHT, 
 			TEX_WIDTH, TEX_HEIGHT, bkg_dest.x, bkg_dest.y);
 		if (e_s == NULL)
+			return false;
+		//load in the puzzles for the game
+		p_s = puzzle_event_parse("puzzles.events", SCR_WIDTH, SCR_HEIGHT, 
+			TEX_WIDTH, TEX_HEIGHT, bkg_dest.x, bkg_dest.y);
+		if (p_s == NULL)
 			return false;
 		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), TEX_WIDTH, TEX_HEIGHT);
 		
@@ -263,6 +277,15 @@ static bool game_state_setup()
 
 static void game_state_update()
 {
+	if (puzzle_id != -1)
+	{
+		//if we hit the new puzzle id, make the changes
+		if (!p_s->es1[puzzle_id].done){
+			if (puzzle_event_update(p_s, puzzle_id, mx, my))
+				p_s->es1[puzzle_id].done = true;
+		}
+	}
+
 	if (!is_inventory)
 	{
 		//running through the scooter animation, will tidy up when finished...
@@ -338,6 +361,7 @@ static void game_state_destroy()
 {
 	font_multicol_destroy(debug, 1);
 	inventory_destroy();
+	puzzle_event_destroy(p_s);
 	events_pos_destroy(e_s);
 	font_multicol_destroy(event_text, event_text_col_number);
 	//SDL_FreeSurface(scoot_anim);
@@ -388,11 +412,43 @@ static bool game_hitbox_update(bool go_back)
 			if ((bkg_id + bkg_id_offset) == 0 && go_back)
 				bkg = scale_surface(load_bmp(bkg_start), TEX_WIDTH, TEX_HEIGHT);
 			else
-				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
-			
-			if (go_back)
-				bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+			{
+				if (puzzle_id != -1)
+				{
+					if (p_s->es1[puzzle_id].done)
+					{
+						//if the puzzle is done, change the backgrounds to the new backgrounds
+						char* new_bkg = puzzle_event_update_bkg(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
+						if (new_bkg != NULL)
+							bkg = scale_surface(load_bmp(new_bkg), TEX_WIDTH, TEX_HEIGHT);
+						else
+							bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+					}
+				}
 
+				else
+					bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+			}
+
+			if (go_back)
+			{
+				if (puzzle_id != -1)
+				{
+					if (p_s->es1[puzzle_id].done)
+					{
+						//if the puzzle is done, change the backgrounds to the new backgrounds
+						char* new_bkg = puzzle_event_update_bkg(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
+						if (new_bkg != NULL)
+							bkg = scale_surface(load_bmp(new_bkg), TEX_WIDTH, TEX_HEIGHT);
+						else
+							bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+					}
+				}
+
+				else
+					bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+			}
+				
 			else
 				event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
 					&bkg_id, &bkg_size, &bkg_id_offset);
@@ -442,6 +498,11 @@ static bool game_hitbox_update(bool go_back)
 
 		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == VIDEO_ID){
 			video_play2(scr, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, &sys_init);
+			sub_event_first_time = false;
+		}
+
+		else if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == PUZZLE_ID){
+			puzzle_id = puzzle_event_find(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
 			sub_event_first_time = false;
 		}
 

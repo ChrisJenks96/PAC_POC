@@ -248,10 +248,8 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h, int tex_w, int tex_h
 							e->es1[index].es2[j].id = SOUND_ID;
 						else if (strcmp(empty, "video") == 0)
 							e->es1[index].es2[j].id = VIDEO_ID;
-						else if (strcmp(empty, "start_anim") == 0)
-							e->es1[index].es2[j].id = START_ANIM_ID;
-						else if (strcmp(empty, "end_anim") == 0)
-							e->es1[index].es2[j].id = END_ANIM_ID;
+						else if (strcmp(empty, "puzzle") == 0)
+							e->es1[index].es2[j].id = PUZZLE_ID;
 					}
 
 					index++;

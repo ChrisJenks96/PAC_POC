@@ -1,5 +1,5 @@
 TARGET = pac_poc
-OBJS   = main.o util.o anim.o main_menu.o callbacks.o inventory.o events.o video.o
+OBJS   = main.o util.o anim.o main_menu.o callbacks.o inventory.o events.o video.o save.o puzzles.o
 
 INCDIR   =
 CFLAGS   = -O0 -G0 -Wall -g -D__PSP__

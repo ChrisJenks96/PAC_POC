@@ -11,8 +11,7 @@
 #define VIDEO_ID 1
 #define TEXT_ID 2
 #define NEXT_SCENE_ID 3
-#define START_ANIM_ID 4
-#define END_ANIM_ID 5
+#define PUZZLE_ID 4
 
 typedef struct event_seq_child2
 {

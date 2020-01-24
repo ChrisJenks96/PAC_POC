@@ -1,0 +1,54 @@
+15
+main_camera_1 1
+hb 0 0 800 600 1 
+next_scene main_camera_1_1.bmp
+
+main_camera_1_1 2
+hb 626 110 82 219 1
+next_scene main_camera_1_3.bmp
+hb 0 150 363 197 1
+next_scene main_camera_1_2.bmp
+
+main_camera_1_2 2
+hb 300 310 277 59 2
+text 1 <w>fuel pump on truck [test]<w>
+sound Hammer.ogg
+hb 50 91 188 246 1
+text 2 <w>The truck door is<w><r> locked<r>
+
+main_camera_1_3 2 
+hb 28 58 194 226 2
+text 1 <w>The window opens and I climb through<w>
+next_scene main_camera_2.bmp
+hb 508 27 210 449 1
+text 2 <w>The door is<w><r> locked<r>
+
+main_camera_2 1
+hb 0 0 800 600 1
+next_scene main_camera_2_1.bmp
+
+main_camera_2_1 1
+hb 0 0 800 600 1
+next_scene main_camera_2_2.bmp
+
+main_camera_2_2 2
+hb 124 365 84 121 1
+next_scene main_camera_2_4.bmp
+hb 353 391 60 79 1
+next_scene main_camera_2_3.bmp
+
+main_camera_2_3 1
+hb 0 0 800 600 1
+next_scene main_camera_2_4.bmp
+
+main_camera_2_4 1
+hb 0 0 800 600 1
+puzzle lift_power_up
+
+main_camera_2_5 1
+hb 0 0 800 600 1
+next_scene main_camera_2_6.bmp
+
+main_camera_2_6 1
+hb 0 0 800 600 1
+next_scene main_camera_2_6.bmp
