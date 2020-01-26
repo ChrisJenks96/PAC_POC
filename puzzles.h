@@ -37,7 +37,7 @@ puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h,
 	int tex_w, int tex_h, int offset_x, int offset_y);
 void puzzle_event_destroy(puzzle_seq* p);
 int puzzle_event_find(puzzle_seq* p, char* s);
-char* puzzle_event_update_bkg(puzzle_seq* p, char* s);
+char* puzzle_event_find_bkg(puzzle_seq* p, char* s);
 bool puzzle_event_update(puzzle_seq* p, int id, int mx, int my);
 
 #define NO_LIFE_POWER_PUZZLE 0

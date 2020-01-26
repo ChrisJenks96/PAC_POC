@@ -117,7 +117,7 @@ int puzzle_event_find(puzzle_seq* p, char* s)
 	return -1;
 }
 
-char* puzzle_event_update_bkg(puzzle_seq* p, char* s)
+char* puzzle_event_find_bkg(puzzle_seq* p, char* s)
 {
 	int i, j;
 	for (i = 0; i < p->num_events; i++){

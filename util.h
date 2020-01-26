@@ -71,7 +71,7 @@ typedef struct font_surface
 	double GetCounter();
 #endif
 
-void mouse_update(float dt);
+void mouse_update(float dt, int scr_w, int scr_h);
 void pc_mouse_debug_coord(float dt);
 //timed key press
 bool timed_bool(bool* k, bool* k_press, float dt, float s);

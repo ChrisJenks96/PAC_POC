@@ -236,13 +236,7 @@ static bool game_state_setup()
 		if (p_s == NULL)
 			return false;
 		bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str), TEX_WIDTH, TEX_HEIGHT);
-		
-		//FIX THIS ON LOAD GAME
-		//back the old name up
-		//bkg_names[1] = bkg_start;
-		//update the name of the current background
-		//bkg_names[0] = e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str;
-
+	
 		//update the event system with the new bkg
 		event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset,
 			&bkg_id, &bkg_size, &bkg_id_offset);
@@ -282,7 +276,16 @@ static void game_state_update()
 		//if we hit the new puzzle id, make the changes
 		if (!p_s->es1[puzzle_id].done){
 			if (puzzle_event_update(p_s, puzzle_id, mx, my))
+			{
 				p_s->es1[puzzle_id].done = true;
+				//dont forget to change the current bkg if it's a puzzle related change
+				int new_bkg_id = puzzle_event_find(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str);
+				if (new_bkg_id != -1)
+				{
+					SDL_FreeSurface(bkg);
+					bkg = scale_surface(load_bmp(p_s->es1[puzzle_id].ns[new_bkg_id].after_bkg), TEX_WIDTH, TEX_HEIGHT);
+				}
+			}
 		}
 	}
 
@@ -418,7 +421,7 @@ static bool game_hitbox_update(bool go_back)
 					if (p_s->es1[puzzle_id].done)
 					{
 						//if the puzzle is done, change the backgrounds to the new backgrounds
-						char* new_bkg = puzzle_event_update_bkg(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
+						char* new_bkg = puzzle_event_find_bkg(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
 						if (new_bkg != NULL)
 							bkg = scale_surface(load_bmp(new_bkg), TEX_WIDTH, TEX_HEIGHT);
 						else
@@ -437,7 +440,7 @@ static bool game_hitbox_update(bool go_back)
 					if (p_s->es1[puzzle_id].done)
 					{
 						//if the puzzle is done, change the backgrounds to the new backgrounds
-						char* new_bkg = puzzle_event_update_bkg(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
+						char* new_bkg = puzzle_event_find_bkg(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
 						if (new_bkg != NULL)
 							bkg = scale_surface(load_bmp(new_bkg), TEX_WIDTH, TEX_HEIGHT);
 						else
@@ -576,7 +579,13 @@ static void game_event_update()
 					for (i = 0; i < e_s->es1[bkg_id + bkg_id_offset].sub_events; i++)
 						e_s->es1[bkg_id + bkg_id_offset].es2[i].done = false;
 					SDL_FreeSurface(bkg);
-					bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
+
+					//check to see if the puzzle is complete so we can update to that one and not the original bkg
+					char* new_bkg_id = puzzle_event_find_bkg(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
+					if (new_bkg_id != NULL)
+						bkg = scale_surface(load_bmp(new_bkg_id), TEX_WIDTH, TEX_HEIGHT);
+					else
+						bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
 					//reset the sub event to 0
 					bkg_sub_event_id = 0;
 					//resync events with new id's
@@ -642,6 +651,10 @@ static void game_event_update()
 						if (found)
 							break;
 					}
+
+					//sometimes we fall into this loophole... reset the count
+					if (bkg_id_offset >= bkg_size)
+						bkg_id_offset = 0;
 				}
 
 				else
@@ -681,7 +694,7 @@ int main(int argc, char** argv)
 	while (!quit)
 	{
 		startclock = SDL_GetTicks();
-		mouse_update(delta_time);
+		mouse_update(delta_time, SCR_WIDTH, SCR_HEIGHT);
 		pc_mouse_debug_coord(delta_time);
 
 		#ifdef _PSP

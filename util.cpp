@@ -49,21 +49,34 @@ void pc_mouse_debug_coord(float dt)
 	SDL_WM_SetCaption(str, NULL);
 }
 
-void mouse_update(float dt)
+void mouse_update(float dt, int scr_w, int scr_h)
 {
 	#ifdef _WIN32
 		SDL_GetMouseState(&mx, &my);
+		//dont go outside boundaries
+		if (mx > scr_w - 16)
+			mx = scr_w - 16;
+		if (my > scr_h - 16)
+			my = scr_h - 16;
 		cursor_dest.x = mx - (cursor_dest.w / 2);
 		cursor_dest.y = my - (cursor_dest.h / 2);
 	#else
+		//deadzone on psp... too freaky w/o
 		int x = pad.Lx - 128;
 		if (x > -30 && x < 30)
 			x = 0;
 		int y = pad.Ly - 128;
 		if (y > -30 && y < 30)
 			y = 0;
+		
 		cursor_dest.x += x * dt;
 		cursor_dest.y += y * dt;
+		//dont go outside boundaries
+		//psp divide by 2 (32/2=16) doesnt work (Sint /2) (no point casting float and back if we know its size)
+		if (cursor_dest.x > scr_w - 16)
+			cursor_dest.x = scr_w - 16;
+		if (cursor_dest.y > scr_h - 16)
+			cursor_dest.y = scr_h - 16;
 		//sync var for main menu highlight
 		mx = cursor_dest.x;
 		my = cursor_dest.y;
