@@ -228,7 +228,7 @@ event_seq* events_pos_parse(char* fn, int scr_w, int scr_h, int tex_w, int tex_h
 						{
 							sscanf(buff, "%s %i", &empty[0], &e->es1[index].es2[j].str_num_cols);
 							//buff[5] removes text preface and -1 removes string formatting at end
-							int str_end_id = (str_find(buff, '>', 64) + 1);
+							int str_end_id = (_str_find(buff, '>') + 1);
 							strncpy(&e->es1[index].es2[j].id_str[0], &buff[7], str_end_id - 7);
 						}
 

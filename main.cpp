@@ -274,16 +274,30 @@ static void game_state_update()
 	if (puzzle_id != -1)
 	{
 		//if we hit the new puzzle id, make the changes
-		if (!p_s->es1[puzzle_id].done){
+		if (!p_s->es1[puzzle_id].done)
+		{
 			if (puzzle_event_update(p_s, puzzle_id, mx, my))
 			{
 				p_s->es1[puzzle_id].done = true;
+				if (p_s->es1[puzzle_id].num_sounds > 0)
+				{
+					if (music != NULL){
+						Mix_FreeMusic(music);
+						music = NULL;
+					}
+
+					else
+						music = Mix_LoadMUS(p_s->es1[puzzle_id].nsound[0].id_str);
+
+					Mix_PlayMusic(music, false);
+					music_playing_flag = true;
+				}
+
 				//dont forget to change the current bkg if it's a puzzle related change
 				int new_bkg_id = puzzle_event_find(p_s, e_s->es1[bkg_id + bkg_id_offset].es2[0].id_str);
-				if (new_bkg_id != -1)
-				{
+				if (new_bkg_id != -1){
 					SDL_FreeSurface(bkg);
-					bkg = scale_surface(load_bmp(p_s->es1[puzzle_id].ns[new_bkg_id].after_bkg), TEX_WIDTH, TEX_HEIGHT);
+					bkg = scale_surface(load_bmp(p_s->es1[puzzle_id].nscene[new_bkg_id].after_bkg), TEX_WIDTH, TEX_HEIGHT);
 				}
 			}
 		}
@@ -464,7 +478,7 @@ static bool game_hitbox_update(bool go_back)
 		{
 			if (event_text)
 				font_multicol_destroy(event_text, 1);
-			event_text_len = str_end(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, 64);
+			event_text_len = _str_find(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, '>');
 			event_text_col_number = e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].str_num_cols;
 			event_text = font_multicol_setup(font, 
 				e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str, w, r, (SCR_WIDTH / 2), SCR_HEIGHT - 30, true);
@@ -675,13 +689,20 @@ int main(int argc, char** argv)
 		StartCounter();
 		len = _strlen("test");
 		c = GetCounter();
-		printf("c:%f\n", c);
+		printf("_strlen:%f\n", c);
 		StartCounter();
 		len = strlen("test");
 		c2 = GetCounter();
-		printf("c2:%f\n", c2);
+		printf("strlen:%f\n", c2);
 
-		_test1();
+		StartCounter();
+		len = _str_find("test", 's');
+		c = GetCounter();
+		printf("_str_find:%f\n", c);
+		StartCounter();
+		len = str_find("test", 's');
+		c2 = GetCounter();
+		printf("str_find:%f\n", c2);
 	#endif
 
 	if (!general_state_setup())

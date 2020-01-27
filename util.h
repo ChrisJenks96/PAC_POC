@@ -80,8 +80,7 @@ SDL_Surface* load_bmp(char* fn);
 SDL_Surface* scale_surface(SDL_Surface *Surface, Uint16 Width, Uint16 Height);
 
 //hacky string end for our string format w/ color
-int str_end(char* s, int size);
-int str_find(char* s, char c, int size);
+int str_find(char* s, char c);
 
 //multi coloured fonts
 font_surface* font_multicol_setup(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text);

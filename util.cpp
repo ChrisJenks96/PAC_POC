@@ -215,20 +215,17 @@ SDL_Surface* scale_surface(SDL_Surface *Surface, Uint16 Width, Uint16 Height)
 	}
 }
 
-int str_end(char* s, int size)
+int str_find(char* s, char c)
 {
-	//run through whole string, find '<', leave..
-	int id = -1, c = 0;
-	for (; c < size; c++)
-		id = s[c] == '>' ? c : id;
-	return id;
-}
-
-int str_find(char* s, char c, int size)
-{
-	int id = -1, k = 0;
-	for (; k < size; k++)
+	int id = 0, k = 0;
+	while (true)
+	{
 		id = s[k] == c ? k : id;
+		k++;
+		if (s[k] == 0)
+			break;
+	}
+
 	return id;
 }
 
@@ -236,7 +233,7 @@ int str_find(char* s, char c, int size)
 font_surface* font_multicol_setup(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text)
 {
 	font_surface* s;
-	int i = 0, c = 0, surf_count = 0, str_size = str_end(txt, 64);
+	int i = 0, c = 0, surf_count = 0, str_size = _str_find(txt, '>');
 	//oversized int array to store color elems (if any)
 	unsigned char* txt_col_ids = new unsigned char[str_size];
 	int txt_col_count = 0;

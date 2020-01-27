@@ -33,6 +33,51 @@ static inline int _strlen(const char* s)
 	return l;
 }
 
+static inline int _str_find(char* s, char c)
+{
+	int l;
+	#ifdef _WIN32
+	#ifdef _ASM
+		_asm
+		{
+			mov eax, s //mov str address into 32 bit reg
+			dec eax //move back as we increment off the bat in the loop
+			mov esi, -1 //set to -1
+			mov BL, c //move comparing char into 8 bit BL
+		
+			_str_find_loop:
+				inc esi
+				inc eax //move forward on the string pointer
+				mov BH, [eax] //move first elem str array into 8 bit BH
+				cmp BL, BH //compare both 8 bit reg
+				je _str_find_found //if its found, log the id and continue till end of str
+				cmp BH, 00h //if we hit the end of the string (0 null term) time to quit
+				je _str_find_end //jump to end game
+				jmp _str_find_loop //rinse and repeat
+
+			_str_find_found:
+				mov l, esi //return count	
+				jmp _str_find_loop
+
+			_str_find_end:
+		}
+	#endif
+	#else
+		//clone of the utils.h version but no scope to call w/o recursion
+		int k = 0;
+		l = 0;
+		while (true)
+		{
+			l = s[k] == c ? k : l;
+			k++;
+			if (s[k] == 0)
+				break;
+		}
+
+	#endif
+	return l;
+}
+
 static inline void _test1()
 {
 	#ifdef _WIN32

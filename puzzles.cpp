@@ -30,7 +30,8 @@ puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h, int tex_w, int te
 				{
 					p->es1[i].done = false;
 					//set to NULL for checks later
-					p->es1[i].ns = NULL;
+					p->es1[i].nscene = NULL;
+					p->es1[i].nsound = NULL;
 
 					int len = _strlen(empty);
 					p->es1_name[i] = (char*)malloc(sizeof(char) * len);
@@ -41,10 +42,13 @@ puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h, int tex_w, int te
 					if (strcmp(empty, "inv") == 0)
 					{
 						//inventory task
-						sscanf(buff, "%s %s %i %i %i %i %i", &empty[0], 
+						sscanf(buff, "%s %s %i %i %i %i %i %i %i", &empty[0], 
 							&p->es1[i].inv_id[0], &p->es1[i].pos_x, 
 							&p->es1[i].pos_y, &p->es1[i].size_x, 
-								&p->es1[i].size_y, &p->es1[i].sub_events);
+								&p->es1[i].size_y, &p->es1[i].sub_events,
+								&p->es1[i].num_sounds, &p->es1[i].num_scenes);
+
+						p->es1[i].ids = (int*)malloc(sizeof(int) * p->es1[i].sub_events);
 
 						//adapt coordinates for different platforms
 						//all coordinates are based off the 800 x 600 default
@@ -58,22 +62,25 @@ puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h, int tex_w, int te
 						p->es1[i].size_y *= new_coord_y;
 
 						//revert back to the current file seek after checking the next first key
-						int last_seek = ftell(f);
-						fgets(buff, 128, f);
-						sscanf(buff, "%s", &empty[0]);
-						//fseek(f, last_seek, SEEK_SET);
-						//move the seek pointer back to before the next line
-						if (strcmp(empty, "next_bkg") == 0)
-							p->es1[i].ns = (puzzle_seq_next_scene*)malloc(sizeof(puzzle_seq_next_scene) * p->es1[i].sub_events);
-
+						int last_seek = ftell(f), curr_sound = 0, curr_scene = 0, loop;
+						p->es1[i].nsound = (puzzle_seq_sound*)malloc(sizeof(puzzle_seq_sound) * p->es1[i].num_sounds);
+						p->es1[i].nscene = (puzzle_seq_next_scene*)malloc(sizeof(puzzle_seq_next_scene)  * p->es1[i].num_scenes);
 						for (j = 0; j < p->es1[i].sub_events; j++)
 						{
-							if (strcmp(empty, "next_bkg") == 0)
-							{
-								sscanf(buff, "%s %s %s", &empty[0], &p->es1[i].ns[sub_index].before_bkg[0],
-								&p->es1[i].ns[sub_index].after_bkg[0]);
-								fgets(buff, 128, f);
-								sub_index++;
+							fgets(buff, 128, f);
+							sscanf(buff, "%s", &empty[0]);
+							//move the seek pointer back to before the next line
+							if (strcmp(empty, "sound") == 0){
+								p->es1[i].ids[j] = PUZZLE_SOUND_ID;
+								sscanf(buff, "%s %s %i", &empty[0], &p->es1[i].nsound[curr_sound].id_str[0], &loop);
+								p->es1[i].nsound[curr_sound].loop = (bool)loop;
+								curr_sound++;
+							}
+							else if (strcmp(empty, "next_bkg") == 0){
+								p->es1[i].ids[j] = PUZZLE_BKG_ID;
+								sscanf(buff, "%s %s %s", &empty[0], &p->es1[i].nscene[curr_scene].before_bkg[0],
+								&p->es1[i].nscene[curr_scene].after_bkg[0]);
+								curr_scene++;
 							}
 						}
 					}
@@ -91,10 +98,17 @@ void puzzle_event_destroy(puzzle_seq* p)
 	if (p != NULL)
 	{
 		int i;
-		for (i = 0; i < p->num_events; i++){
-			if (p->es1[i].ns != NULL){
-				free(p->es1[i].ns);
-				p->es1[i].ns = NULL;
+		for (i = 0; i < p->num_events; i++)
+		{
+			free(p->es1[i].ids);
+			if (p->es1[i].nscene != NULL){
+				free(p->es1[i].nscene);
+				p->es1[i].nscene = NULL;
+			}
+
+			if (p->es1[i].nsound != NULL){
+				free(p->es1[i].nsound);
+				p->es1[i].nsound = NULL;
 			}
 		}
 
@@ -121,9 +135,9 @@ char* puzzle_event_find_bkg(puzzle_seq* p, char* s)
 {
 	int i, j;
 	for (i = 0; i < p->num_events; i++){
-		for (j = 0; j < p->es1[i].sub_events; j++){
-			if (strcmp(p->es1[i].ns[j].before_bkg, s) == 0){
-				return p->es1[i].ns[j].after_bkg;
+		for (j = 0; j < p->es1[i].num_scenes; j++){
+			if (strcmp(p->es1[i].nscene[j].before_bkg, s) == 0){
+				return p->es1[i].nscene[j].after_bkg;
 			}
 		}
 	}
