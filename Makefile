@@ -1,5 +1,5 @@
 TARGET = pac_poc
-OBJS   = main.o util.o anim.o main_menu.o callbacks.o inventory.o events.o video.o save.o puzzles.o
+OBJS   = main.o util.o anim.o main_menu.o callbacks.o inventory.o events.o video.o save.o puzzles.o sound.o
 
 INCDIR   =
 CFLAGS   = -O0 -G0 -Wall -g -D__PSP__
@@ -10,7 +10,7 @@ LIBDIR  =
 LDFLAGS =
 LIBS    = -lSDL -lSDL_TTF -lSDL_mixer -lmikmod -lsmpeg -lpmp -lvorbisidec -logg -lmmio -lpspirkeyb -lpspwlan -lpsppower -lGL -lfreetype -ljpeg -lpng -lz -lm -lSDL -lpspgu -lpsphprm -lpspaudiocodec -lpspmpeg -lpspgu -lpspaudio -lstdc++ -lpspvfpu -lpsprtc
 
-BUILD_PRX = 1 
+BUILD_PRX = 1
 
 EXTRA_TARGETS   = EBOOT.PBP
 PSP_EBOOT_TITLE = PAC_POC

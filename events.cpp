@@ -62,8 +62,8 @@ void event_bkg_id_revert(int* bkg_id, int* bkg_size, int* bkg_id_offset, int* bk
 
 		case BKG_8_ID:
 		{
-			*bkg_id = BKG_6_ID; 
-			*bkg_size = BKG_6_SIZE; 
+			*bkg_id = BKG_5_ID; 
+			*bkg_size = BKG_5_SIZE; 
 			break;
 		}
 

@@ -41,6 +41,7 @@
 #include "events.h"
 #include "save.h"
 #include "video.h"
+#include "sound.h"
 #include "puzzles.h"
 #include "experimental.h"
 
@@ -99,6 +100,7 @@ event_seq* e_s = NULL;
 puzzle_seq* p_s = NULL;
 
 font_surface* debug;
+char debug_txt[32];
 
 //game specific code
 /*#define SCOOTER_EVENTS_NUM 1
@@ -180,6 +182,7 @@ static bool general_state_setup()
 	cursor_dest.w = cursor->w;
 
 	debug = font_multicol_setup(font, "<w>NULL<w>", font_c_highlight, font_c_unhighlight, 10, 10, false);
+	strcpy(&debug_txt[0], "<w>NULL<w>");
 	return true;
 }
 
@@ -281,16 +284,8 @@ static void game_state_update()
 				p_s->es1[puzzle_id].done = true;
 				if (p_s->es1[puzzle_id].num_sounds > 0)
 				{
-					if (music != NULL){
-						Mix_FreeMusic(music);
-						music = NULL;
-					}
-
-					else
-						music = Mix_LoadMUS(p_s->es1[puzzle_id].nsound[0].id_str);
-
-					Mix_PlayMusic(music, false);
-					music_playing_flag = true;
+					if (sound_load(&music, p_s->es1[puzzle_id].nsound[puzzle_sound_count].id_str))
+						sound_play(&music, &music_playing_flag, p_s->es1[puzzle_id].nsound[puzzle_sound_count].loop);
 				}
 
 				//dont forget to change the current bkg if it's a puzzle related change
@@ -388,6 +383,25 @@ static void game_state_destroy()
 	}
 }
 
+//prints out the bkg name and event information 
+//helpful for debugging
+static void debug_output()
+{
+	char debug_buff[32];
+	if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id != TEXT_ID){
+		strcpy(&debug_buff[0], "<w>");
+		strcpy(&debug_buff[_strlen(debug_buff)], e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
+		strcpy(&debug_buff[_strlen(debug_buff)], "<w>");
+		strcpy(&debug_txt[0], debug_buff);
+	}
+
+	else
+		strcpy(&debug_buff[0], "<w>Text ID - NULL<w>");
+	//debug text for outputting shite
+	font_multicol_destroy(debug, 1);
+	debug = font_multicol_setup(font, debug_buff, font_c_highlight, font_c_unhighlight, 10, 10, false);
+}
+
 //when we click on a game hitbox, we update everything
 static bool game_hitbox_update(bool go_back)
 {
@@ -406,20 +420,7 @@ static bool game_hitbox_update(bool go_back)
 
 	if (!e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].done)
 	{
-		char debug_buff[128];
-		if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id != TEXT_ID){
-			strcpy(&debug_buff[0], "<w>");
-			strcpy(&debug_buff[_strlen(debug_buff)], e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
-			strcpy(&debug_buff[_strlen(debug_buff)], "<w>");
-		}
-
-		else
-			strcpy(&debug_buff[0], "<w>Text ID - NULL<w>");
-		//debug text for outputting shite
-		font_multicol_destroy(debug, 1);
-		debug = font_multicol_setup(font, debug_buff, font_c_highlight, font_c_unhighlight, 10, 10, false);
-
-
+		debug_output();
 		//make sure the event is now done so we can move on to the next one
 		e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].done = true;
 		if (e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id == NEXT_SCENE_ID)
@@ -494,22 +495,10 @@ static bool game_hitbox_update(bool go_back)
 				music_event_id = (bkg_id + bkg_id_offset);
 				music_event_id2 = bkg_sub_event_id;
 
-				if (music != NULL){
-					Mix_FreeMusic(music);
-					music = NULL;
-				}
-				else
-				{
-					music = Mix_LoadMUS(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str);
-					if (music == NULL){
-						printf("%s", Mix_GetError());
-						return false;
-					}
-				}
+				if (sound_load(&music, e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str))
+					sound_play(&music, &music_playing_flag, false);
 			}
 
-			Mix_PlayMusic(music, false);
-			music_playing_flag = true;
 			sub_event_first_time = false;
 		}
 
@@ -602,6 +591,8 @@ static void game_event_update()
 						bkg = scale_surface(load_bmp(e_s->es1[bkg_id + bkg_id_offset].es2[bkg_sub_event_id].id_str), TEX_WIDTH, TEX_HEIGHT);
 					//reset the sub event to 0
 					bkg_sub_event_id = 0;
+					//update the debugging information
+					debug_output();
 					//resync events with new id's
 					event_bkg_id_update(&bkg_old_id, &bkg_old_size, &bkg_old_id_offset, &bkg_id, &bkg_size, &bkg_id_offset);
 					//prevent us from running the normal event loop afterwards..
@@ -722,15 +713,70 @@ int main(int argc, char** argv)
 			quit = !running();
 		#endif
 
+		//level specific code
+		if (puzzle_id == NO_LIFE_POWER_PUZZLE)
+		{
+			if (p_s->es1[puzzle_id].ids[0].done)
+			{
+				puzzle_sound_count = puzzle_event_find_id(p_s, PUZZLE_SOUND_ID);
+				//we have to wait... doesn't unload quick enough
+				if (!sound_isplaying() && !p_s->es1[puzzle_id].ids[puzzle_sound_count].done)
+				{
+					//set it to true so we play it on loop but it's done
+					p_s->es1[puzzle_id].ids[puzzle_sound_count].done = true;
+					if (sound_load(&music, p_s->es1[puzzle_id].nsound[puzzle_sound_count].id_str))
+						sound_play(&music, &music_playing_flag, p_s->es1[puzzle_id].nsound[puzzle_sound_count].loop);
+				}
+			}
+
+			if (p_s->es1[puzzle_id].ids[1].done)
+			{
+				//annoyingly use frmatting on the custom strings
+				int str_lpu = strcmp(debug_txt, "<w>lift_power_up<w>");
+				int str_mc24 = strcmp(debug_txt, "<w>main_camera_2_4.bmp<w>");
+
+				//if we mvoe away from the scene with the generator... play the lower sound
+				if (str_lpu != 0 && str_mc24 != 0){
+					if (!puzzle_id_gen_low_loop_playing)
+					{
+						if (sound_load(&music, "generator_low_loop.ogg"))
+							sound_play(&music, &music_playing_flag, true);
+						puzzle_id_gen_low_loop_playing = true;
+					}
+				}
+				//if we come back.. play the higher version of the generator
+				else if (str_lpu == 0 || str_mc24 == 0)
+				{
+					if (puzzle_id_gen_low_loop_playing)
+					{
+						if (sound_load(&music, p_s->es1[puzzle_id].nsound[1].id_str))
+							sound_play(&music, &music_playing_flag, p_s->es1[puzzle_id].nsound[1].loop);
+						puzzle_id_gen_low_loop_playing = false;
+					}
+				}
+			}
+		}
+
 		//play music
 		//If there is no music playing
 		if (music_playing_flag)
 		{
 			//dont free music up here... done in the event system instead
-			if(Mix_PlayingMusic() == 0 ){
+			if(!sound_isplaying())
+			{
+				//puzzle related sound effects
+				if (puzzle_id != -1){
+					puzzle_sound_count = puzzle_event_find_id(p_s, PUZZLE_SOUND_ID);
+					if (puzzle_sound_count != -1){
+						if (!p_s->es1[puzzle_id].ids[puzzle_sound_count].done)
+							p_s->es1[puzzle_id].ids[puzzle_sound_count].done = true;
+					}
+				}
+
 				music_playing_flag = false;
 			}
 		}
+
 
 		if (save_game_flag)
 		{
@@ -845,9 +891,7 @@ int main(int argc, char** argv)
 		}
 
 		font_multicol_render(scr, debug, 1);
-
 		SDL_BlitSurface(cursor, NULL, scr, &cursor_dest);
-
 		SDL_Flip(scr);
 
 		delta_time = ((float)(SDL_GetTicks() - startclock)) / 1000.0f;

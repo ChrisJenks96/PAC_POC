@@ -1,6 +1,10 @@
 #include "puzzles.h"
 
 int puzzle_id = -1;
+int puzzle_sound_count = 0;
+
+//game specific code and triggers
+bool puzzle_id_gen_low_loop_playing = false;
 
 puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h, int tex_w, int tex_h, int offset_x, int offset_y)
 {
@@ -48,7 +52,7 @@ puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h, int tex_w, int te
 								&p->es1[i].size_y, &p->es1[i].sub_events,
 								&p->es1[i].num_sounds, &p->es1[i].num_scenes);
 
-						p->es1[i].ids = (int*)malloc(sizeof(int) * p->es1[i].sub_events);
+						p->es1[i].ids = (puzzle_seq_ids*)malloc(sizeof(puzzle_seq_ids) * p->es1[i].sub_events);
 
 						//adapt coordinates for different platforms
 						//all coordinates are based off the 800 x 600 default
@@ -69,15 +73,17 @@ puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h, int tex_w, int te
 						{
 							fgets(buff, 128, f);
 							sscanf(buff, "%s", &empty[0]);
+							//set all events to be not done
+							p->es1[i].ids[j].done = false;
 							//move the seek pointer back to before the next line
 							if (strcmp(empty, "sound") == 0){
-								p->es1[i].ids[j] = PUZZLE_SOUND_ID;
+								p->es1[i].ids[j].id = PUZZLE_SOUND_ID;
 								sscanf(buff, "%s %s %i", &empty[0], &p->es1[i].nsound[curr_sound].id_str[0], &loop);
 								p->es1[i].nsound[curr_sound].loop = (bool)loop;
 								curr_sound++;
 							}
 							else if (strcmp(empty, "next_bkg") == 0){
-								p->es1[i].ids[j] = PUZZLE_BKG_ID;
+								p->es1[i].ids[j].id = PUZZLE_BKG_ID;
 								sscanf(buff, "%s %s %s", &empty[0], &p->es1[i].nscene[curr_scene].before_bkg[0],
 								&p->es1[i].nscene[curr_scene].after_bkg[0]);
 								curr_scene++;
@@ -91,6 +97,17 @@ puzzle_seq* puzzle_event_parse(char* fn, int scr_w, int scr_h, int tex_w, int te
 		fclose(f);
 		return p;
 	}
+}
+
+int puzzle_event_find_id(puzzle_seq* p, int id)
+{
+	int i;
+	for (i = 0; i < p->es1[puzzle_id].sub_events; i++){
+		if (!p->es1[puzzle_id].ids[i].done && p->es1[puzzle_id].ids[i].id == id)
+			return i;
+	}
+
+	return -1;
 }
 
 void puzzle_event_destroy(puzzle_seq* p)
