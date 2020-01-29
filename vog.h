@@ -9,6 +9,7 @@
 
 #include "util.h"
 #include "sound.h"
+#include <png.h>
 
 #define VOG_RGB 3
 
@@ -28,4 +29,13 @@ int vog_setup(const char* fn, const char* s_fn, int scr_w, int scr_h);
 int vog_get_frame_data();
 void vog_update(SDL_Surface* scr);
 
+extern int x, y;
+
+extern png_structp png_ptr;
+extern png_infop info_ptr;
+extern int number_of_passes;
+extern png_bytep * row_pointers;
+extern unsigned int row_bytes;
+
+void read_png_file();
 #endif

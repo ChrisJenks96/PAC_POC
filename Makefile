@@ -3,7 +3,7 @@ OBJS   = main.o util.o anim.o main_menu.o callbacks.o inventory.o events.o video
 
 
 INCDIR   =
-CFLAGS   = -G0 -O2 -Wall -g -D__PSP__
+CFLAGS   = -O2 -G0 -D__PSP__
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS  = $(CFLAGS)
 

@@ -8,7 +8,7 @@
 	#define TEX_WIDTH 800
 	#define TEX_HEIGHT 600
 	#define SCR_BPP 32
-	#define SCR_SURF_MODE SDL_SWSURFACE
+	#define SCR_SURF_MODE SDL_HWSURFACE | SDL_DOUBLEBUF
 #else
 	#include <pspkernel.h>
 	#include <pspgu.h>
