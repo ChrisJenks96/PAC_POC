@@ -11,14 +11,14 @@
 	#include <SDL_mixer.h>
 	#include <smpeg.h>
 #elif _PSP
+	#include <pspsdk.h>
 	#include <pspkernel.h>
 	#include <pspgu.h>
 	#include <SDL/SDL.h>
 	#include <SDL/SDL_mixer.h>
-	#include <pmp/pmp.h>
-	#include <pmp/pmp_play.h>
 #endif
 
+#include "vog.h"
 #include "util.h"
 
 #ifdef _WIN32

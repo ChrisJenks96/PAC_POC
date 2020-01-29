@@ -1,5 +1,7 @@
 #include "sound.h"
 
+Mix_Music* music = NULL;
+
 bool sound_load(Mix_Music** music, const char* s)
 {
 	if (*music != NULL){

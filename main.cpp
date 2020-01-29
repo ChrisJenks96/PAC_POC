@@ -44,10 +44,10 @@
 #include "sound.h"
 #include "puzzles.h"
 #include "experimental.h"
+#include "vog.h"
 
 //main shit
 bool music_playing_flag = false;
-Mix_Music* music = NULL;
 //tracking if the last played music is the same... hence we dont need to delete
 int music_event_id = -1, music_event_id2 = -1;
 //used to activate a save game once (event based key press)
@@ -713,185 +713,199 @@ int main(int argc, char** argv)
 			quit = !running();
 		#endif
 
-		//level specific code
-		if (puzzle_id == NO_LIFE_POWER_PUZZLE)
+		if (vog_play)
 		{
-			if (p_s->es1[puzzle_id].ids[0].done)
-			{
-				puzzle_sound_count = puzzle_event_find_id(p_s, PUZZLE_SOUND_ID);
-				//we have to wait... doesn't unload quick enough
-				if (!sound_isplaying() && !p_s->es1[puzzle_id].ids[puzzle_sound_count].done)
-				{
-					//set it to true so we play it on loop but it's done
-					p_s->es1[puzzle_id].ids[puzzle_sound_count].done = true;
-					if (sound_load(&music, p_s->es1[puzzle_id].nsound[puzzle_sound_count].id_str))
-						sound_play(&music, &music_playing_flag, p_s->es1[puzzle_id].nsound[puzzle_sound_count].loop);
-				}
-			}
-
-			if (p_s->es1[puzzle_id].ids[1].done)
-			{
-				//annoyingly use frmatting on the custom strings
-				int str_lpu = strcmp(debug_txt, "<w>lift_power_up<w>");
-				int str_mc24 = strcmp(debug_txt, "<w>main_camera_2_4.bmp<w>");
-
-				//if we mvoe away from the scene with the generator... play the lower sound
-				if (str_lpu != 0 && str_mc24 != 0){
-					if (!puzzle_id_gen_low_loop_playing)
-					{
-						if (sound_load(&music, "generator_low_loop.ogg"))
-							sound_play(&music, &music_playing_flag, true);
-						puzzle_id_gen_low_loop_playing = true;
-					}
-				}
-				//if we come back.. play the higher version of the generator
-				else if (str_lpu == 0 || str_mc24 == 0)
-				{
-					if (puzzle_id_gen_low_loop_playing)
-					{
-						if (sound_load(&music, p_s->es1[puzzle_id].nsound[1].id_str))
-							sound_play(&music, &music_playing_flag, p_s->es1[puzzle_id].nsound[1].loop);
-						puzzle_id_gen_low_loop_playing = false;
-					}
-				}
-			}
-		}
-
-		//play music
-		//If there is no music playing
-		if (music_playing_flag)
-		{
-			//dont free music up here... done in the event system instead
-			if(!sound_isplaying())
-			{
-				//puzzle related sound effects
-				if (puzzle_id != -1){
-					puzzle_sound_count = puzzle_event_find_id(p_s, PUZZLE_SOUND_ID);
-					if (puzzle_sound_count != -1){
-						if (!p_s->es1[puzzle_id].ids[puzzle_sound_count].done)
-							p_s->es1[puzzle_id].ids[puzzle_sound_count].done = true;
-					}
-				}
-
-				music_playing_flag = false;
-			}
-		}
-
-
-		if (save_game_flag)
-		{
-			//set all game save variables before saving
-			gs_scene_id = 0;
-			//-1 because we start before the 0th bkg hence we need to jump back one frame
-			//no bkg_id_offset as this prevents the background from being loaded in array elem 0
-			gs_bkg_id = bkg_old_id;
-			gs_bkg_size = bkg_old_size;
-			gs_bkg_id_offset = bkg_old_id_offset;
-			game_save();
-			save_game_flag = false;
-		}
-
-		//refresh if the screen doesnt match tex size (for cursor movement)
-		if (SCR_WIDTH != TEX_WIDTH || SCR_HEIGHT != TEX_HEIGHT)
 			SDL_FillRect(scr, NULL, 0x000000);
-
-		//events
-		#ifdef _WIN32
-			SDL_PollEvent(&e);
-			switch (e.type)
+			vog_update(scr);
+		}
+		else
+		{
+			//level specific code
+			if (puzzle_id == NO_LIFE_POWER_PUZZLE)
 			{
-				case SDL_QUIT:
-					quit = true;
-					break;
-				case SDL_MOUSEBUTTONDOWN:
+				if (p_s->es1[puzzle_id].ids[0].done)
+				{
+					puzzle_sound_count = puzzle_event_find_id(p_s, PUZZLE_SOUND_ID);
+					//we have to wait... doesn't unload quick enough
+					if (!sound_isplaying() && !p_s->es1[puzzle_id].ids[puzzle_sound_count].done)
 					{
+						//set it to true so we play it on loop but it's done
+						p_s->es1[puzzle_id].ids[puzzle_sound_count].done = true;
+						if (sound_load(&music, p_s->es1[puzzle_id].nsound[puzzle_sound_count].id_str))
+							sound_play(&music, &music_playing_flag, p_s->es1[puzzle_id].nsound[puzzle_sound_count].loop);
+					}
+				}
+
+				if (p_s->es1[puzzle_id].ids[1].done)
+				{
+					//annoyingly use frmatting on the custom strings
+					int str_lpu = strcmp(debug_txt, "<w>lift_power_up<w>");
+					int str_mc24 = strcmp(debug_txt, "<w>main_camera_2_4.bmp<w>");
+
+					//if we mvoe away from the scene with the generator... play the lower sound
+					if (str_lpu != 0 && str_mc24 != 0){
+						if (!puzzle_id_gen_low_loop_playing)
+						{
+							if (sound_load(&music, "generator_low_loop.ogg"))
+								sound_play(&music, &music_playing_flag, true);
+							puzzle_id_gen_low_loop_playing = true;
+						}
+					}
+					//if we come back.. play the higher version of the generator
+					else if (str_lpu == 0 || str_mc24 == 0)
+					{
+						if (puzzle_id_gen_low_loop_playing)
+						{
+							if (sound_load(&music, p_s->es1[puzzle_id].nsound[1].id_str))
+								sound_play(&music, &music_playing_flag, p_s->es1[puzzle_id].nsound[1].loop);
+							puzzle_id_gen_low_loop_playing = false;
+						}
+					}
+				}
+			}
+
+			//play music
+			//If there is no music playing
+			if (music_playing_flag)
+			{
+				//dont free music up here... done in the event system instead
+				if(!sound_isplaying())
+				{
+					//puzzle related sound effects
+					if (puzzle_id != -1){
+						puzzle_sound_count = puzzle_event_find_id(p_s, PUZZLE_SOUND_ID);
+						if (puzzle_sound_count != -1){
+							if (!p_s->es1[puzzle_id].ids[puzzle_sound_count].done)
+								p_s->es1[puzzle_id].ids[puzzle_sound_count].done = true;
+						}
+					}
+
+					music_playing_flag = false;
+				}
+			}
+
+
+			if (save_game_flag)
+			{
+				//set all game save variables before saving
+				gs_scene_id = 0;
+				//-1 because we start before the 0th bkg hence we need to jump back one frame
+				//no bkg_id_offset as this prevents the background from being loaded in array elem 0
+				gs_bkg_id = bkg_old_id;
+				gs_bkg_size = bkg_old_size;
+				gs_bkg_id_offset = bkg_old_id_offset;
+				game_save();
+				save_game_flag = false;
+			}
+
+			//refresh if the screen doesnt match tex size (for cursor movement)
+			if (SCR_WIDTH != TEX_WIDTH || SCR_HEIGHT != TEX_HEIGHT)
+				SDL_FillRect(scr, NULL, 0x000000);
+
+			//events
+			#ifdef _WIN32
+				SDL_PollEvent(&e);
+				switch (e.type)
+				{
+					case SDL_QUIT:
+						quit = true;
+						break;
+					case SDL_MOUSEBUTTONDOWN:
+						{
+							//if we start the game, switch to game game state
+							game_state = font_select_id == 0 || font_select_id == 1 ? 1 : 0;
+							//have we pressed the quit button on the main menu?
+							quit = font_select_id == 2 ? true : false; //make this main menu state only
+							break;
+						}
+					case SDL_KEYUP:
+						switch(e.key.keysym.sym )
+						{
+							case SDLK_F1:
+								save_game_flag = false;
+								break;
+						}
+					case SDL_KEYDOWN:
+						switch(e.key.keysym.sym )
+						{
+							case SDLK_F1:
+								save_game_flag = true;
+								break;
+							//toggle the inventory (in game)
+							case SDLK_TAB:
+								if (!inv_key_press)
+									inv_key_press = true;
+							default:
+								break;
+						}
+				}
+			#else
+				sceCtrlReadBufferPositive(&pad, 1); 
+				sceCtrlReadLatch(&latch);
+				if (pad.Buttons != 0)
+				{
+					if (isKeyDown(PSP_CTRL_SELECT))
+					{
+						if (!inv_key_press)
+							inv_key_press = true;
+					}
+
+					if (isKeyDown(PSP_CTRL_CROSS)){
 						//if we start the game, switch to game game state
 						game_state = font_select_id == 0 || font_select_id == 1 ? 1 : 0;
 						//have we pressed the quit button on the main menu?
 						quit = font_select_id == 2 ? true : false; //make this main menu state only
-						break;
 					}
-				case SDL_KEYUP:
-					switch(e.key.keysym.sym )
-					{
-						case SDLK_F1:
-							save_game_flag = false;
-							break;
-					}
-				case SDL_KEYDOWN:
-					switch(e.key.keysym.sym )
-					{
-						case SDLK_F1:
-							save_game_flag = true;
-							break;
-						//toggle the inventory (in game)
-						case SDLK_TAB:
-							if (!inv_key_press)
-								inv_key_press = true;
-						default:
-							break;
-					}
-			}
-		#else
-			sceCtrlReadBufferPositive(&pad, 1); 
-			sceCtrlReadLatch(&latch);
-			if (pad.Buttons != 0)
+
+					if (isKeyDown(PSP_CTRL_START))
+						save_game_flag = true;
+					if (isKeyUp(PSP_CTRL_START))
+						save_game_flag = false;
+				}
+			#endif
+
+			if (game_state == 0)
+				main_menu_state_update();
+			if (game_state == 1)
 			{
-				if (isKeyDown(PSP_CTRL_SELECT))
+				if (!game_state_setup_flag)
 				{
-					if (!inv_key_press)
-						inv_key_press = true;
+					//unload main menu
+					main_menu_state_destroy();
+					if (!game_state_setup())
+						quit = true;
+					game_state_setup_flag = true;
+					//for debugging
+					video_play2(scr, "test", &sys_init);
+					SDL_Delay(GAME_DEFAULT_DELAY);
 				}
 
-				if (isKeyDown(PSP_CTRL_CROSS)){
-					//if we start the game, switch to game game state
-					game_state = font_select_id == 0 || font_select_id == 1 ? 1 : 0;
-					//have we pressed the quit button on the main menu?
-					quit = font_select_id == 2 ? true : false; //make this main menu state only
+				game_state_update();
+			}
+
+			game_event_update();
+
+			//always render cursor last
+			if (event_text_len != 0)
+			{
+				font_multicol_render(scr, event_text, event_text_col_number);
+				event_text_time += delta_time;
+				if (event_text_time > EVENT_TEXT_DELAY)
+				{
+					event_text_len = 0;
+					event_text_time = 0.0f;
 				}
-
-				if (isKeyDown(PSP_CTRL_START))
-					save_game_flag = true;
-				if (isKeyUp(PSP_CTRL_START))
-					save_game_flag = false;
-			}
-		#endif
-
-		if (game_state == 0)
-			main_menu_state_update();
-		if (game_state == 1)
-		{
-			if (!game_state_setup_flag)
-			{
-				//unload main menu
-				main_menu_state_destroy();
-				if (!game_state_setup())
-					quit = true;
-				game_state_setup_flag = true;
-				//for debugging
-				video_play2(scr, "test", &sys_init);
-				SDL_Delay(GAME_DEFAULT_DELAY);
 			}
 
-			game_state_update();
+
+			font_multicol_render(scr, debug, 1);
+			SDL_BlitSurface(cursor, NULL, scr, &cursor_dest);
 		}
 
-		game_event_update();
+		unsigned int timerFps = SDL_GetTicks() - startclock; //I get the time it took to update and draw;
+        if(timerFps < (1000.0f / GAME_FPS)) // if timerFps is < 16.6666...7 ms (meaning it loaded the frame too fast)
+            SDL_Delay((1000.0f / GAME_FPS) - timerFps); //delay the frame to be in time
 
-		//always render cursor last
-		if (event_text_len != 0)
-		{
-			font_multicol_render(scr, event_text, event_text_col_number);
-			event_text_time += delta_time;
-			if (event_text_time > EVENT_TEXT_DELAY)
-			{
-				event_text_len = 0;
-				event_text_time = 0.0f;
-			}
-		}
-
-		font_multicol_render(scr, debug, 1);
-		SDL_BlitSurface(cursor, NULL, scr, &cursor_dest);
 		SDL_Flip(scr);
 
 		delta_time = ((float)(SDL_GetTicks() - startclock)) / 1000.0f;

@@ -1,7 +1,6 @@
 #include "video.h"
 
 #ifdef _WIN32
-	/* Flag telling the UI that the movie or song should be skipped */
 	int done;
 	int use_audio, use_video;
 	int fullscreen;
@@ -164,30 +163,18 @@
 
 	bool video_play(SDL_Surface* scr, char* n)
 	{
-		#ifdef _WIN32
+		/*#ifdef _WIN32
 			if (pc_video_setup(n, scr, scr->w, scr->h)){
 				pc_video_play(scr);
 				pc_video_destroy();
 				return true;
 			}
 			return false;
-		#elif _PSP
-			char* result = pmp_init();
-			if (result != 0)
-				return false;
-			result = pmp_play(n, 1, GU_PSM_8888);
-			if (result != 0)
-				return false;
-			while (pmp_isplaying()){
-				sceKernelDelayThread(1000*1000); // Wait 1 seconds.
-			}
-
-			pmp_stop();
-
-			//test to see if it goes beyond this point... it does
-			//sceKernelExitGame();
-			return true;
-		#endif
+		#elif _PSP*/
+			if (vog_setup("DUMP.vog", "DUMP.ogg", scr->w, scr->h) != -1)
+				return true;
+			return false;
+		//#endif
 	}
 
 //USE THIS ONE!!!
@@ -208,10 +195,10 @@ void video_play2(SDL_Surface* scr, char* fn, void (*sys_init)())
 			Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
 		#elif _PSP
 			strcpy(&buff[_strlen(fn)], ".pmp");
-			SDL_Quit();
+			//SDL_Quit();
 			video_play(scr, buff);
 			//we have to close SDL, play the vid, reopen SDL
-			sys_init();
+			//sys_init();
 		#endif
 	}
 }

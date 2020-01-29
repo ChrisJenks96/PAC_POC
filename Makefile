@@ -1,14 +1,15 @@
 TARGET = pac_poc
-OBJS   = main.o util.o anim.o main_menu.o callbacks.o inventory.o events.o video.o save.o puzzles.o sound.o
+OBJS   = main.o util.o anim.o main_menu.o callbacks.o inventory.o events.o video.o save.o puzzles.o sound.o vog.o
+
 
 INCDIR   =
-CFLAGS   = -O0 -G0 -Wall -g -D__PSP__
+CFLAGS   = -G0 -O2 -Wall -g -D__PSP__
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS  = $(CFLAGS)
 
-LIBDIR  =
+LIBDIR  = 
 LDFLAGS =
-LIBS    = -lSDL -lSDL_TTF -lSDL_mixer -lmikmod -lsmpeg -lpmp -lvorbisidec -logg -lmmio -lpspirkeyb -lpspwlan -lpsppower -lGL -lfreetype -ljpeg -lpng -lz -lm -lSDL -lpspgu -lpsphprm -lpspaudiocodec -lpspmpeg -lpspgu -lpspaudio -lstdc++ -lpspvfpu -lpsprtc
+LIBS    = -lSDL -lSDL_TTF -lSDL_mixer -lmikmod -lsmpeg -lvorbisidec -logg -lmmio -lpspirkeyb -lpspwlan -lpsppower -lGL -lfreetype -ljpeg -lpng -lz -lm -lSDL -lpspgu -lpsphprm -lpspaudiocodec -lpspmpeg -lpspgu -lpspaudio -lstdc++ -lpspvfpu -lpsprtc
 
 BUILD_PRX = 1
 
