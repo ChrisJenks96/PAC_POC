@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#ifdef _WIN32
+	#include <SDL.h>
+
+#elif _PSP
+	#include <SDL/SDL.h>
+#endif
+
 #define _ASM
 
 //https://stackoverflow.com/questions/25796257/trying-to-figure-out-masm-syntax
@@ -103,6 +110,30 @@ static inline void _test1()
 	#endif
 	#endif
 	return;
+}
+
+
+static int _SDL_UpperBlit (SDL_Surface *src, SDL_Rect *srcrect,
+	SDL_Surface *dst, SDL_Rect *dstrect)
+{
+	SDL_Rect fulldst;
+	int srcx, srcy, w, h;
+
+	srcx = srcy = 0;
+	w = src->w;
+	h = src->h;
+
+	int dx, dy;
+	SDL_Rect *clip = &dst->clip_rect;
+	dx = dstrect->x + w - clip->x - clip->w;
+	dy = dstrect->y + h - clip->y - clip->h;
+
+	SDL_Rect sr;
+	sr.x = srcx;
+	sr.y = srcy;
+	sr.w = dstrect->w = w;
+	sr.h = dstrect->h = h;
+	return SDL_LowerBlit(src, &sr, dst, dstrect);
 }
 
 #endif

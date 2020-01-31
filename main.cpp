@@ -171,9 +171,6 @@ static bool general_state_setup()
 		return false;
 
 	//init sdl mixer
-	err = Mix_Init(MIX_INIT_OGG);
-	if (err == -1)
-		return false;
 	Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
 
 	cursor = load_bmp("cursor.bmp");
@@ -919,8 +916,6 @@ int main(int argc, char** argv)
     TTF_CloseFont(font);
 	//Quit SDL_ttf
     TTF_Quit();
-	//quit the sdl mixer
-	Mix_Quit();
 	SDL_Quit();
 
 	#ifdef _PSP

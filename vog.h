@@ -9,7 +9,12 @@
 
 #include "util.h"
 #include "sound.h"
-#include <png.h>
+
+#define XMD_H
+extern "C" {
+	#include <jpeglib.h>
+	#include <setjmp.h>
+}
 
 #define VOG_RGB 3
 
@@ -25,17 +30,24 @@ extern int f_vog_block_size;
 extern bool f_vog_done;
 extern bool vog_play;
 
+extern struct jpeg_decompress_struct cinfo;	
+extern struct my_error_mgr jerr;
+extern JSAMPARRAY buffer;		/* Output row buffer */
+extern int row_stride;		/* physical row width in output buffer */
+
 int vog_setup(const char* fn, const char* s_fn, int scr_w, int scr_h);
 int vog_get_frame_data();
 void vog_update(SDL_Surface* scr);
 
-extern int x, y;
+struct my_error_mgr {
+  struct jpeg_error_mgr pub;	/* "public" fields */
 
-extern png_structp png_ptr;
-extern png_infop info_ptr;
-extern int number_of_passes;
-extern png_bytep * row_pointers;
-extern unsigned int row_bytes;
+  jmp_buf setjmp_buffer;	/* for return to caller */
+};
 
-void read_png_file();
+typedef struct my_error_mgr * my_error_ptr;
+
+GLOBAL(int) read_JPEG_file ();
+METHODDEF(void) my_error_exit (j_common_ptr cinfo);
+
 #endif

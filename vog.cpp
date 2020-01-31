@@ -15,13 +15,10 @@ int f_vog_block_size = 0;
 bool f_vog_done = false;
 bool vog_play = false;
 
-int x, y;
-
-png_structp png_ptr;
-png_infop info_ptr;
-int number_of_passes;
-png_bytep * row_pointers;
-unsigned int row_bytes;
+struct jpeg_decompress_struct cinfo;	
+struct my_error_mgr jerr;
+JSAMPARRAY buffer;		/* Output row buffer */
+int row_stride;		/* physical row width in output buffer */
 
 int vog_setup(const char* fn, const char* s_fn, int scr_w, int scr_h)
 {
@@ -52,39 +49,19 @@ int vog_setup(const char* fn, const char* s_fn, int scr_w, int scr_h)
 		vog_width, vog_height, 24, VOG_RGB * vog_width, 
 			0x000000ff, 0x0000ff00, 0x00ff0000, 0);
 
-	 row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * vog_height);
-    for (y=0; y<vog_height; y++)
-		row_pointers[y] = (png_byte*)malloc(vog_width * VOG_RGB);
-
 	vog_play = true;
 	return 0;
 }
 
 int vog_get_frame_data()
 {
-	if (f_vog_curr_frame < vog_num_frames)
-	{
-		png_read_end(png_ptr, info_ptr);
-		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-
-		read_png_file();
-
-		// note that png is ordered top to
-		// bottom, but OpenGL expect it bottom to top
-		// so the order or swapped
-		for (int i = 0; i < vog_height; i++)
-			memcpy(vog_data+(row_bytes * (vog_height-1-i)), row_pointers[i], row_bytes);
-		
+	if (f_vog_curr_frame < vog_num_frames){
+		read_JPEG_file();
 		f_vog_curr_frame++;
 	}
 
 	else
 	{
-		for (y=0; y<vog_height; y++)
-			free(row_pointers[y]);
-		free(row_pointers);
-		png_read_end(png_ptr, info_ptr);
-		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 		SDL_FreeSurface(vog_video_surface);
 		free(vog_data);
 		fclose(f_vog);
@@ -109,26 +86,72 @@ void vog_update(SDL_Surface* scr)
 	if (vog_get_frame_data() != -1)
 	{
 		vog_video_surface->pixels = vog_data;
-		SDL_BlitSurface(vog_video_surface, NULL, scr, &vog_dest);
-		SDL_Flip(scr);
+		//SDL_BlitSurface(vog_video_surface, NULL, scr, &vog_dest);
+		_SDL_UpperBlit(vog_video_surface, NULL, scr, &vog_dest);
 	}
 }
 
-void read_png_file()
+METHODDEF(void) my_error_exit (j_common_ptr cinfo)
 {
-    char header[8];    // 8 is the maximum size that can be checked
+  /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
+  my_error_ptr myerr = (my_error_ptr) cinfo->err;
 
-    fread(header, 1, 8, f_vog);
-  
-    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    info_ptr = png_create_info_struct(png_ptr);
+  /* Always display the message. */
+  /* We could postpone this until after returning, if we chose. */
+  (*cinfo->err->output_message) (cinfo);
 
-    png_init_io(png_ptr, f_vog);
-    png_set_sig_bytes(png_ptr, 8);
-    png_read_info(png_ptr, info_ptr);
+  /* Return control to the setjmp point */
+  longjmp(myerr->setjmp_buffer, 1);
+}
 
-    png_read_update_info(png_ptr, info_ptr);
 
-	png_read_image(png_ptr, row_pointers);
-	row_bytes = png_get_rowbytes(png_ptr, info_ptr);
+GLOBAL(int) read_JPEG_file()
+{
+	int next_seek, old_seek;
+	cinfo.err = jpeg_std_error(&jerr.pub);
+	jerr.pub.error_exit = my_error_exit;
+	/* Establish the setjmp return context for my_error_exit to use. */
+	if (setjmp(jerr.setjmp_buffer)) {
+		/* If we get here, the JPEG code has signaled an error.
+			* We need to clean up the JPEG object, close the input file, and return.
+			*/
+		jpeg_destroy_decompress(&cinfo);
+		return 0;
+	}
+
+	/* Now we can initialize the JPEG decompression object. */
+	jpeg_create_decompress(&cinfo);
+
+	old_seek = ftell(f_vog);
+	fread(&next_seek, 4, 1, f_vog);
+	jpeg_stdio_src(&cinfo, f_vog);
+	jpeg_read_header(&cinfo, FALSE);
+
+	jpeg_start_decompress(&cinfo);
+	/* JSAMPLEs per row in output buffer */
+	row_stride = cinfo.output_width * cinfo.output_components;
+	/* Make a one-row-high sample array that will go away when done with image */
+	buffer = (*cinfo.mem->alloc_sarray)
+		((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
+
+	int i, src, dest = 0;
+	while (cinfo.output_scanline < cinfo.output_height) 
+	{
+		src = 0;
+		jpeg_read_scanlines(&cinfo, buffer, 1);
+		for(i=0;i<cinfo.output_width;i++)
+		{
+			vog_data[dest*3+2]=buffer[0][src*3+2];
+			vog_data[dest*3+1]=buffer[0][src*3+1];
+			vog_data[dest*3+0]=buffer[0][src*3+0];
+			src++;
+			dest++;
+		}
+	}
+
+	jpeg_finish_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
+	//move onto the next JPEG
+	fseek(f_vog, (old_seek + next_seek) + 4, SEEK_SET);
+	return 1;
 }
