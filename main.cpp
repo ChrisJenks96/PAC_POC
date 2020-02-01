@@ -29,9 +29,9 @@
 
 	#define printf pspDebugScreenPrintf
 
-	PSP_MODULE_INFO("PAC_POC", 0, 1, 1);
-	PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
-	PSP_HEAP_SIZE_KB(20480);
+	PSP_MODULE_INFO("PAC_POC", 0, 1, 0);
+	PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER);
+	PSP_HEAP_SIZE_MAX();
 #endif
 
 #include "main_menu.h"
@@ -712,7 +712,11 @@ int main(int argc, char** argv)
 
 		if (vog_play)
 		{
-			SDL_FillRect(scr, NULL, 0x000000);
+			if (!vog_blank_flag){
+				vog_blank_flag = true;
+				SDL_FillRect(scr, NULL, 0x000000);
+			}
+
 			vog_update(scr);
 		}
 		else

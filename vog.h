@@ -5,6 +5,22 @@
 	#include <SDL.h>
 #elif _PSP
 	#include <SDL/SDL.h>
+	//#include <psptypes.h>
+	typedef unsigned int SceSize;
+	#include <pspjpeg.h>
+	#include <malloc.h>
+	#include <pspkernel.h>
+	#include <pspctrl.h>
+	#include <pspdisplay.h>
+	#include <psputility.h>
+	#include <pspgu.h>
+	#include <psppower.h>
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <psprtc.h>
+	#include <pspsdk.h>
+	#include <string.h>
+	#include <pspgu.h>
 #endif
 
 #include "util.h"
@@ -16,9 +32,16 @@ extern "C" {
 	#include <setjmp.h>
 }
 
-#define VOG_RGB 3
+//hacky way of doing scejpeg provides rgba / libjpeg win32 provides rgb
+#ifdef _WIN32
+	#define VOG_RGB 3
+	#define VOG_BPP 24
+#elif _PSP
+	#define VOG_RGB 4
+	#define VOG_BPP 32
+#endif
 
-extern unsigned char* vog_data;
+extern char* vog_data;
 extern SDL_Surface* vog_video_surface;
 extern SDL_Rect vog_dest;
 extern FILE* f_vog;
@@ -29,6 +52,7 @@ extern int f_vog_curr_frame;
 extern int f_vog_block_size;
 extern bool f_vog_done;
 extern bool vog_play;
+extern bool vog_blank_flag;
 
 extern struct jpeg_decompress_struct cinfo;	
 extern struct my_error_mgr jerr;
@@ -49,5 +73,10 @@ typedef struct my_error_mgr * my_error_ptr;
 
 GLOBAL(int) read_JPEG_file ();
 METHODDEF(void) my_error_exit (j_common_ptr cinfo);
+
+#ifdef _PSP
+	SceUID load_module(const char *path, int flags, int type);
+	void jpg2buf();
+#endif
 
 #endif
