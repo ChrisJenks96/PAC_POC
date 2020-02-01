@@ -1,6 +1,7 @@
 #include "vog.h"
 
-char* vog_data;
+char* vog_data = NULL;
+char* vog_music_data = NULL;
 SDL_Surface* vog_video_surface;
 SDL_Rect vog_dest;
 FILE* f_vog;
@@ -25,18 +26,25 @@ struct my_error_mgr jerr;
 JSAMPARRAY buffer;		/* Output row buffer */
 int row_stride;		/* physical row width in output buffer */
 
-int vog_setup(const char* fn, const char* s_fn, int scr_w, int scr_h)
+int vog_setup(const char* fn, int scr_w, int scr_h)
 {
 	f_vog = fopen(fn, "rb");
 	if (!f_vog)
 		return -1;
 
-	if (!sound_load(&music, s_fn))
-		return -1;
-
 	fread(&vog_num_frames, 4, 1, f_vog);
 	fread(&vog_width, 4, 1, f_vog);
 	fread(&vog_height, 4, 1, f_vog);
+
+	if (vog_music_data != NULL)
+		free(vog_music_data);
+
+	int sound_size;
+	fread(&sound_size, 4, 1, f_vog);
+	vog_music_data = (char*)malloc(sound_size);
+	fread(&vog_music_data[0], sound_size, 1, f_vog);
+	if (!sound_load_mem(&music, vog_music_data, sound_size))
+		return -1;
 
 	f_vog_done = false;
 	f_vog_block_size = VOG_RGB * vog_width * vog_height;

@@ -32,15 +32,18 @@ extern "C" {
 	#include <setjmp.h>
 }
 
+#define VOG_RGBA 4
+
 //hacky way of doing scejpeg provides rgba / libjpeg win32 provides rgb
 #ifdef _WIN32
 	#define VOG_RGB 3
 	#define VOG_BPP 24
 #elif _PSP
-	#define VOG_RGB 4
+	#define VOG_RGB VOG_RGBA
 	#define VOG_BPP 32
 #endif
 
+extern char* vog_music_data;
 extern char* vog_data;
 extern SDL_Surface* vog_video_surface;
 extern SDL_Rect vog_dest;
@@ -59,7 +62,7 @@ extern struct my_error_mgr jerr;
 extern JSAMPARRAY buffer;		/* Output row buffer */
 extern int row_stride;		/* physical row width in output buffer */
 
-int vog_setup(const char* fn, const char* s_fn, int scr_w, int scr_h);
+int vog_setup(const char* fn, int scr_w, int scr_h);
 int vog_get_frame_data();
 void vog_update(SDL_Surface* scr);
 

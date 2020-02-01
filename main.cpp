@@ -368,6 +368,8 @@ static void main_menu_state_destroy()
 
 static void game_state_destroy()
 {
+	if (vog_music_data != NULL)
+		free(vog_music_data);
 	font_multicol_destroy(debug, 1);
 	inventory_destroy();
 	puzzle_event_destroy(p_s);
@@ -877,7 +879,7 @@ int main(int argc, char** argv)
 						quit = true;
 					game_state_setup_flag = true;
 					//for debugging
-					video_play2(scr, "test", &sys_init);
+					video_play2(scr, "DUMP", &sys_init);
 					SDL_Delay(GAME_DEFAULT_DELAY);
 				}
 
