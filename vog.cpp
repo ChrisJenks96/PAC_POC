@@ -16,6 +16,10 @@ bool f_vog_done = false;
 bool vog_play = false;
 bool vog_blank_flag = false;
 
+#ifdef _PSP
+	char* databuf;
+#endif
+
 struct jpeg_decompress_struct cinfo;	
 struct my_error_mgr jerr;
 JSAMPARRAY buffer;		/* Output row buffer */
@@ -43,6 +47,9 @@ int vog_setup(const char* fn, const char* s_fn, int scr_w, int scr_h)
 		start = sceKernelStartModule(load, 0, NULL, &status, NULL);
 		sceJpegInitMJpeg();
 		sceJpegCreateMJpeg(vog_width, vog_height);
+		//8192 is the biggest jpeg frame size in the testing clip
+		//make sure to change this at a later date.
+		databuf = (char*)malloc(8192);
 	#elif _WIN32
 		/* Now we can initialize the JPEG decompression object. */
 		jpeg_create_decompress(&cinfo);
@@ -80,6 +87,7 @@ int vog_get_frame_data()
 	else
 	{
 		#ifdef _PSP
+			free(databuf);
 			sceJpegDeleteMJpeg();
 			sceJpegFinishMJpeg();
 		#endif
@@ -133,11 +141,10 @@ METHODDEF(void) my_error_exit (j_common_ptr cinfo)
 
 		/* If the type is 0, then load the module in the kernel partition, otherwise load it
 		   in the user partition. */
-		if (type == 0) {
+		if (type == 0)
 			mpid = 1;
-		} else {
+		else
 			mpid = 2;
-		}
 
 		memset(&option, 0, sizeof(option));
 		option.size = sizeof(option);
@@ -154,12 +161,9 @@ METHODDEF(void) my_error_exit (j_common_ptr cinfo)
 		int next_seek, old_seek;
 		old_seek = ftell(f_vog);
 		fread(&next_seek, 4, 1, f_vog);
-		char* databuf = (char*)malloc(next_seek);
+		//databuf = (char*)malloc(next_seek);
 		fread(&databuf[0], next_seek, 1, f_vog);
-		//sceJpegInitMJpeg();
-		//sceJpegCreateMJpeg(vog_width, vog_height);
 		int res = sceJpegDecodeMJpeg((u8*)databuf, next_seek, vog_data, 0);
-		free(databuf);
 		//move onto the next JPEG
 		fseek(f_vog, (old_seek + next_seek) + 4, SEEK_SET);
 	}

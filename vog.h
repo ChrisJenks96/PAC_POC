@@ -75,6 +75,7 @@ GLOBAL(int) read_JPEG_file ();
 METHODDEF(void) my_error_exit (j_common_ptr cinfo);
 
 #ifdef _PSP
+	extern char* databuf;
 	SceUID load_module(const char *path, int flags, int type);
 	void jpg2buf();
 #endif
