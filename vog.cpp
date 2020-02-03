@@ -17,6 +17,12 @@ bool f_vog_done = false;
 bool vog_play = false;
 bool vog_blank_flag = false;
 
+int vog_sleep_delay;
+unsigned int vog_vid_clock;
+unsigned int vog_vid_last;
+//get past the first lock... it will crash (sdl_delay(-2000))
+bool vog_fps_lock_flag = false;
+
 #ifdef _PSP
 	char* databuf;
 #endif
@@ -70,6 +76,10 @@ int vog_setup(const char* fn, int scr_w, int scr_h)
 
 	vog_video_surface = NULL;
 
+	//get first frame
+	vog_vid_clock = VOG_TARGET_MS;
+	vog_sleep_delay = -1;
+
 	//default shite... change later
 	vog_dest.h = (Uint16)vog_height;
 	vog_dest.w = (Uint16)vog_width;
@@ -89,7 +99,7 @@ int vog_get_frame_data()
 {
 	if (f_vog_curr_frame < vog_num_frames){
 		read_JPEG_file();
-		f_vog_curr_frame++;
+		f_vog_curr_frame++;	
 	}
 
 	else
@@ -117,14 +127,10 @@ void vog_update(SDL_Surface* scr)
 		sound_play(&music, &tmp_bool, false); 
 	}
 
-	#ifdef _WIN32
-		SDL_Delay(33);
-	#endif
 	if (vog_get_frame_data() != -1)
 	{
 		vog_video_surface->pixels = vog_data;
-		//SDL_BlitSurface(vog_video_surface, NULL, scr, &vog_dest);
-		_SDL_UpperBlit(vog_video_surface, NULL, scr, &vog_dest);
+		SDL_UpperBlit(vog_video_surface, NULL, scr, &vog_dest);
 	}
 }
 
@@ -204,7 +210,7 @@ GLOBAL(int) read_JPEG_file()
 		jpeg_read_header(&cinfo, FALSE);
 		jpeg_start_decompress(&cinfo);
 
-		int i, src = 0, dest = 0;
+		int src = 0, dest = 0;
 		while (cinfo.output_scanline < cinfo.output_height) 
 		{
 			jpeg_read_scanlines(&cinfo, buffer, 1);

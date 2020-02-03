@@ -8,7 +8,7 @@
 	#define TEX_WIDTH 800
 	#define TEX_HEIGHT 600
 	#define SCR_BPP 32
-	#define SCR_SURF_MODE SDL_HWSURFACE | SDL_DOUBLEBUF
+	#define SCR_SURF_MODE SDL_HWSURFACE
 #else
 	#include <pspkernel.h>
 	#include <pspgu.h>
@@ -159,6 +159,7 @@ static bool general_state_setup()
 	if (err == -1)
 		return false;
 
+	//font ratio changes with the width and height
 	#ifdef _WIN32
 		font_ratio = (float)SCR_WIDTH / 800.0f;
 		font_size = (int)(20.0f * font_ratio);
@@ -907,7 +908,16 @@ int main(int argc, char** argv)
 
 		unsigned int timerFps = SDL_GetTicks() - startclock; //I get the time it took to update and draw;
         if(timerFps < (1000.0f / GAME_FPS)) // if timerFps is < 16.6666...7 ms (meaning it loaded the frame too fast)
-            SDL_Delay((1000.0f / GAME_FPS) - timerFps); //delay the frame to be in time
+		{
+			#ifdef _WIN32
+				if (vog_play)
+					SDL_Delay(VOG_TARGET_MS - timerFps);
+				else
+					SDL_Delay((1000.0f / GAME_FPS) - timerFps); //delay the frame to be in time
+			#elif _PSP
+				SDL_Delay((1000.0f / GAME_FPS) - timerFps);
+			#endif
+		}
 
 		SDL_Flip(scr);
 

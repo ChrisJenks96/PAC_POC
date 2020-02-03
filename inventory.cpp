@@ -11,6 +11,8 @@ void inventory_init(char* fn)
 {
 	int i;
 	inv = load_bmp("inventory.bmp");
+	//load multiple rects for each tile on the inventory
+	//far quicker than seperate surfaces for each inventory elem
 	for (i = 0; i < INV_TILE_COUNT; i++)
 	{
 		r_inv_source[i].w = r_inv_dest[i].w = INV_TILE_SIZE;

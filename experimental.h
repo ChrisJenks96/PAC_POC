@@ -116,7 +116,6 @@ static inline void _test1()
 static int _SDL_UpperBlit (SDL_Surface *src, SDL_Rect *srcrect,
 	SDL_Surface *dst, SDL_Rect *dstrect)
 {
-	SDL_Rect fulldst;
 	int srcx, srcy, w, h;
 
 	srcx = srcy = 0;

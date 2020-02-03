@@ -32,6 +32,9 @@ extern "C" {
 	#include <setjmp.h>
 }
 
+#define VOG_ACTUAL_VID_FPS 24.0
+#define VOG_DESIRED_VID_FPS 30.0
+#define VOG_TARGET_MS (1000.0 / VOG_ACTUAL_VID_FPS)
 #define VOG_RGBA 4
 
 //hacky way of doing scejpeg provides rgba / libjpeg win32 provides rgb
@@ -56,6 +59,11 @@ extern int f_vog_block_size;
 extern bool f_vog_done;
 extern bool vog_play;
 extern bool vog_blank_flag;
+
+extern int vog_sleep_delay;
+extern unsigned int vog_vid_clock;
+extern unsigned int vog_vid_last;
+extern bool vog_fps_lock_flag;
 
 extern struct jpeg_decompress_struct cinfo;	
 extern struct my_error_mgr jerr;

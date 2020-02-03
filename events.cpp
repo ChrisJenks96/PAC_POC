@@ -1,5 +1,7 @@
 #include "events.h"
 
+//switch through the events backwards, so when we move backwards in the scene, we load the 
+//events which are for the prev bkg
 void event_bkg_id_revert(int* bkg_id, int* bkg_size, int* bkg_id_offset, int* bkg_sub_event_id)
 {
 	switch (*bkg_id)
@@ -83,6 +85,7 @@ void event_bkg_id_revert(int* bkg_id, int* bkg_size, int* bkg_id_offset, int* bk
 	}
 }
 
+//update the events for the new background
 void event_bkg_id_update(int* bkg_old_id, int* bkg_old_size, int* bkg_old_id_offset,
 	int* bkg_id, int* bkg_size, int* bkg_id_offset)
 {
