@@ -1,42 +1,22 @@
-include 'include/macro/struct.inc'
 
-struct BMPHEAD ;BMP head structure
-	id db ?
-	filesize dw ?
-	reserved dw ?
-	headersize dw ?
-	infosize dw ?
-	width dw ?
-	depth dw ?
-	biplanes dw ?
-	bits dw ?
-	bicomp dw ?
-	bisizeim dw ?
-	bixpels dw ?
-	biclrused dw ?
-	biclrimp dw ?
-ends
+;http://forums.codeguru.com/showthread.php?444694-Read-file-from-assembly
+;http://jlp.freeservers.com/files/index.htm
+;http://devdocs.inightmare.org/tutorials/x86-assembly-dos-file-inputoutput.html
 
-struct RGBQUAD ;how the bitmap stores its colors (BGR)
-	b db ?
-	g db ?
-	r db ?
-	fill db ?
-ends
+section .text
 
 load_bmp_open_file:
 	mov ax, 03d00h ;open file / read only
-	lea dx, [filename] ;offset to file
+	mov dx, filename ;offset to file
 	int 021h
-	mov [handle], ax
-	jnc load_bmp_head
-	ret
 
-load_bmp_head:	
+	;This is dumb... mov bx, ax doesnt work...
+	mov [handle], ax
+	
 	mov ah, 03fh	;read file function
-	mov bx, [handle] ; get handle
+	mov bx, [handle]
+	mov dx, data_ptr
 	mov cx, 54	; read 54 bytes
-	lea dx, [data_ptr]
 	int 021h	; read file, AX = bytes read
 	
 	cmp ax, 0 ;AL(or AX) shows hows many bytes were read...
@@ -46,12 +26,29 @@ load_bmp_head:
 	mov bx, handle
 	int 021h
 
+	jmp write_bmp_head
+
+write_bmp_head:
+	mov ax, 03c01h
+	mov cx, 0
+	mov dx, filename_write
+	int 021h
+
+	mov bx, ax
+	mov ah, 040h
+	mov dx, data_ptr
+	mov cx, 54
+	int 021h
+
+	mov ah, 03eh ;close file
+	mov bx, handle
+	int 021h
+
 	jmp vga_main
 
-filename db 'TEST.BMP', 024h ;0 terminating string
-handle dw 0
-data_ptr db 54 dup (0)
-
-;http://forums.codeguru.com/showthread.php?444694-Read-file-from-assembly
-;http://jlp.freeservers.com/files/index.htm
-;http://devdocs.inightmare.org/tutorials/x86-assembly-dos-file-inputoutput.html
+section .data ;put data here
+	handle dw 0
+	data_ptr times 64 db 0
+	filename db 'TEST.BMP', 00h
+	filename_write db 'DUMP.TXT', 00h
+section .bss ;put uninit data here

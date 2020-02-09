@@ -1,12 +1,17 @@
+%include 'BITMAP.ASM'
+
 ;https://thestarman.pcministry.com/asm/debug/8086REGs.htm#REGS
 ;https://everything2.com/title/VGA+Mode+13h
 
-main: ;entry point
-	org	100h ;code starts at offset 100h
-	use16 ;use 16-bit code
+org 100h
+global _start
+
+section .text
+
+_start: ;put code here
 	jmp load_bmp_open_file
 
-vga_main: ;next main after setup work
+vga_main:
 	mov ah, 00h ;VGA mode
 	mov al, 013h 
 	int 10h ; 320x200x8bit
@@ -40,5 +45,7 @@ device_end:
 	int 10h
 	ret
 
-include 'BITMAP.ASM'
-pixels dw 50, 50, 51, 51, 52, 52, 53, 53, 54, 54, 55, 55, 56, 56
+section .data ;put data here
+	pixels dw 50, 50, 51, 51, 52, 52, 53, 53, 54, 54, 55, 55, 56, 56
+
+section .bss ;put uninit data here
