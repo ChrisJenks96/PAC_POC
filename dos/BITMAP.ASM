@@ -10,35 +10,14 @@ load_bmp_open_file:
 	mov dx, filename ;offset to file
 	int 021h
 
-	;This is dumb... mov bx, ax doesnt work...
 	mov [handle], ax
-	
-	mov ah, 03fh	;read file function
+	mov ah, 03fh	;read bmp pixels
 	mov bx, [handle]
-	mov dx, data_ptr
-	mov cx, 54	; read 54 bytes
-	int 021h	; read file, AX = bytes read
-	
-	cmp ax, 0 ;AL(or AX) shows hows many bytes were read...
+	mov dx, bmp_pixels
+	mov cx, 128
+	int 021h
+	cmp ax, 0
 	je device_end
-
-	mov ah, 03eh ;close file
-	mov bx, handle
-	int 021h
-
-	jmp write_bmp_head
-
-write_bmp_head:
-	mov ax, 03c01h
-	mov cx, 0
-	mov dx, filename_write
-	int 021h
-
-	mov bx, ax
-	mov ah, 040h
-	mov dx, data_ptr
-	mov cx, 54
-	int 021h
 
 	mov ah, 03eh ;close file
 	mov bx, handle
@@ -47,8 +26,11 @@ write_bmp_head:
 	jmp vga_main
 
 section .data ;put data here
+	;GOT 640 KB OF SPACE AVAILABLE (WHEN COMPILED UNDER .COM)
+	
+	bmp_pixels times 128 db 0 ;(16 x 16 mario test)
+
 	handle dw 0
-	data_ptr times 64 db 0
-	filename db 'TEST.BMP', 00h
-	filename_write db 'DUMP.TXT', 00h
+	filename db 'DUMP.BIN', 00h
+	filename_write db 'DUMP2.BIN', 00h
 section .bss ;put uninit data here
