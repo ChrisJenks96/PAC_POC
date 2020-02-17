@@ -28,9 +28,8 @@ load_bmp_open_file:
 section .data ;put data here
 	;GOT 640 KB OF SPACE AVAILABLE (WHEN COMPILED UNDER .COM)
 	
-	bmp_pixels times 128 db 0 ;(16 x 16 mario test)
+	bmp_pixels times 128 dw 0 ;(16 x 16 mario test)
 
 	handle dw 0
 	filename db 'DUMP.BIN', 00h
-	filename_write db 'DUMP2.BIN', 00h
 section .bss ;put uninit data here

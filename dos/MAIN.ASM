@@ -30,48 +30,65 @@ pixel_new_row: ;used in put pixel to increment y
 	inc ax ;plus 1 to the y
 	mov [y], ax
 
-	jmp put_pixel ;move back to the put pixel function
+	mov ax, [put_pixel_func_flag]
+	cmp ax, 01h
+	je put_pixel ;if we came out of put_pixel(1), we want to continue to put_pixel2
+	jmp put_pixel2 ;else move back to the put_pixel(1) function
 
 put_pixel:
-	;FIRST PIXEL 4 BITS
+	;post pixel_new_row func, we need to know where to continue from pixel data wise
+	;put_pixel (1) sets the flag to 0
+	mov ax, 00h
+	mov [put_pixel_func_flag], ax 
+
 	mov  ax, 320
-	imul  ax, [y]
-	add  ax, [x]
+	imul  ax, [y] ;320*y
+	add ax, [x]
+	inc ax ; x + 1
 	mov  bx, ax ;320*y+x into bx reg
+	mov ax, 00h ; 0 off ax reg (will contain 320*y still, not needed)
 	mov  al, [si] ;move curr col byte into al
-	;e.g. red 00CC -> AH [0000 0000] AL [1101 1101]
-	shr al, 04h ;-> AH [0000 0000] AL [0000 1101] 
+	;e.g. red 00CC -> AH [0000 0000] AL [*1101* 1101]
+	shr al, 04h ;-> AH [0000 0000] AL [0000 *1101*] 
 	mov  [es:bx], al
 
-	mov bx, [x] ;x
+	mov bx, [x] ;x 
+	inc bx ;add 1 to x
+	mov [x], bx ;write the reg back to the var x 
+	mov cx, [orig_x] ;move the target x into the cx reg
+	add cx, 16 ;append the 16px (15 = 16px - 1) onto the target to simulate the width of sprite
+	cmp bx, cx ;check to see curr x is equal to target x
+	je pixel_new_row ;if so, 0 the x and increment the y
+	
+	jmp put_pixel2
+
+put_pixel2:
+	;post pixel_new_row func, we need to know where to continue from pixel data wise
+	;put_pixel2 sets the flag to 0
+	mov ax, 01h
+	mov [put_pixel_func_flag], ax
+
+	mov ax, 320
+	imul ax, [y]
+	add ax, [x]
+	inc ax ; x + 1
+	mov bx, ax
+	mov ax, 00h
+	mov  al, [si] ;move curr col byte into al
+	;e.g. red 00CC -> AH [0000 0000] AL [1101 *1101*]
+	shl al, 04h ;-> AH [0000 0000] AL [*1101* 0000] 
+	shr al, 04h ;-> AH [0000 0000] AL [0000 *1101*] 
+	mov  [es:bx], al ;
+
+	add si, 01h ;add 1 byte increment (8 bit shift, 2x 4 bit colours, hence we do 2x pixels in put_pixel)
+
+	mov bx, [x]
+	inc bx
+	mov [x], bx
 	mov cx, [orig_x]
-	add cx, 15
-	cmp bx, cx ;if x is 3 pixels wide, change y
+	add cx, 16
+	cmp bx, cx
 	je pixel_new_row
-
-	inc bx ;add 1 to x 
-	mov [x], bx ;write the reg back to the var x
-
-	;NEXT PIXEL 4 BITS
-	mov  ax, 320
-	imul  ax, [y]
-	add  ax, [x]
-	mov  bx, ax ;320*y+x into bx reg
-	mov  ah, [si] ;move curr col byte into ah
-	;e.g. red 00CC -> AH [1101 1101] AL [0000 0000]
-	shr ah, 04h ;-> AH [0000 1101] AL [1101 0000] 
-	mov  [es:bx], ah
-
-	mov bx, [x] ;x
-	mov cx, [orig_x]
-	add cx, 15
-	cmp bx, cx ;if x is 3 pixels wide, change y
-	je pixel_new_row
-
-	inc bx ;add 1 to x 
-	mov [x], bx ;write the reg back to the var x
-
-	inc si
 
 	jmp put_pixel
 
@@ -79,10 +96,12 @@ device_end:
 	ret
 
 section .data ;put data here
-	x dd 46 ;x and orig_x ,y and orig_y have to be the same
-	y dd 46
-	orig_x dd 46
-	orig_y dd 46
+	;for x & y (& orig_) set -1 of dest coords, we have to increment x off the bat in put_pixel for 2x checks
+	x dw 20 ;x and orig_x ,y and orig_y have to be the same
+	y dw 20
+	orig_x dw 20
+	orig_y dw 20
+	put_pixel_func_flag db 0
 
 section .bss ;put uninit data here
 

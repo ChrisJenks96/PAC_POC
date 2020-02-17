@@ -25,14 +25,15 @@ int main(int argc, char** argv)
 	FILE* f, *fo;
 	uint8_t pix[128] = {0};
 	uint8_t pix2[256] = {0};
-	int i, x, y, pix_id = 0, pix_offset;
+	int i, x, y, pix_id = 0;
+	unsigned int pix_offset;
 	f = fopen(argv[1], "rb");
 	if (f)
 	{
 		fseek(f, 10, SEEK_CUR);
 		fread(&pix_offset, 4, 1, f);
 		//find the pixel offset, forget any palette
-		fseek(f, pix_offset - 14, SEEK_CUR);
+		fseek(f, pix_offset, SEEK_SET);
 		fread(&pix[0], 128, 1, f);
 		fclose(f);
 		fo = fopen("DUMP.BIN", "wb");
@@ -66,14 +67,8 @@ int main(int argc, char** argv)
 			}
 		}*/
 
-		//4 bit 
-		for (y = 0; y < 8; y++){
-			for (x = 0; x < 8; x++){
-				int id = ((8-(y+1))*8)+x;
-				fwrite(&pix[id], 1, 1, fo);
-			}
-		}
-
+		//4 bit, upside down, remember to flip image
+		fwrite(&pix[0], 128, 1, fo);
 		fclose(fo);
 	}
 
