@@ -15,6 +15,19 @@ vga_main:
 	mov es, ax ;ES register now points to video memory
 	mov si, bmp_pixels
 
+	jmp init_update
+
+init_update: ;call this before calling update loop, resets all vars
+	mov ax, [x] ;reset x
+	mov bx, [orig_x]
+	mov ax, bx
+	mov ax, [y] ;reset y
+	mov bx, [orig_y]
+	mov ax, bx
+
+	jmp update
+
+update: ;loop through all update/render funcs
 	jmp put_pixel
 
 pixel_new_row: ;used in put pixel to increment y
@@ -23,9 +36,9 @@ pixel_new_row: ;used in put pixel to increment y
 
 	mov ax, [y] ;move y back into ax again, will have been overwritten during pixel placement
 	mov cx, [orig_y]
-	add cx, 15
+	add cx, 16
 	cmp ax, cx ;if its equal to 15 (last row), end
-	je device_end
+	je init_update ;jump back to the start of the update loop again
 
 	inc ax ;plus 1 to the y
 	mov [y], ax
@@ -46,7 +59,8 @@ put_pixel:
 	add ax, [x]
 	inc ax ; x + 1
 	mov  bx, ax ;320*y+x into bx reg
-	mov ax, 00h ; 0 off ax reg (will contain 320*y still, not needed)
+	;mov ax, 00h ; 0 off ax reg (will contain 320*y still, not needed)
+	xor ax, ax ;0 ax reg (xor ax, ax = smaller (2b vs 5b) and addition of clearing CF)
 	mov  al, [si] ;move curr col byte into al
 	;e.g. red 00CC -> AH [0000 0000] AL [*1101* 1101]
 	shr al, 04h ;-> AH [0000 0000] AL [0000 *1101*] 
@@ -73,7 +87,7 @@ put_pixel2:
 	add ax, [x]
 	inc ax ; x + 1
 	mov bx, ax
-	mov ax, 00h
+	xor ax, ax ;0 ax reg (xor ax, ax = smaller (2b vs 5b) and addition of clearing CF)
 	mov  al, [si] ;move curr col byte into al
 	;e.g. red 00CC -> AH [0000 0000] AL [1101 *1101*]
 	shl al, 04h ;-> AH [0000 0000] AL [*1101* 0000] 
@@ -101,8 +115,9 @@ section .data ;put data here
 	y dw 20
 	orig_x dw 20
 	orig_y dw 20
-	put_pixel_func_flag db 0
+	put_pixel_func_flag db 0 ;don't modify! this track which put_pixel we return to after pixel_new_row
 
 section .bss ;put uninit data here
 
 %include 'BITMAP.ASM'
+%include 'KEYBOARD.ASM'
