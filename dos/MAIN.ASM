@@ -13,13 +13,15 @@ vga_main:
 
 	mov ax, 0A000h ;video memory address SVGA
 	mov es, ax ;ES register now points to video memory
-	mov si, bmp_pixels
-
+	
 	jmp init_update
 
 init_update: ;call this before calling update loop, resets all vars
+	mov si, bmp_pixels ;reset the si pointer to start of the bmp pixel data
 	mov ax, [x] ;reset x
+	inc ax ;testing sprite movement on x (remove later) ... must sync x & orig_x
 	mov bx, [orig_x]
+	inc bx ;testing sprite movement on x (remove later) ... 
 	mov ax, bx
 	mov ax, [y] ;reset y
 	mov bx, [orig_y]
@@ -28,7 +30,8 @@ init_update: ;call this before calling update loop, resets all vars
 	jmp update
 
 update: ;loop through all update/render funcs
-	jmp put_pixel
+	jmp put_pixel ;render out the sprite
+	;call get_key ;WORK ON THIS, USER INPUT VIA KEYBOARD INT 16H !!!!!
 
 pixel_new_row: ;used in put pixel to increment y
 	mov bx, [orig_x] ;set x to 0
@@ -51,7 +54,7 @@ pixel_new_row: ;used in put pixel to increment y
 put_pixel:
 	;post pixel_new_row func, we need to know where to continue from pixel data wise
 	;put_pixel (1) sets the flag to 0
-	mov ax, 00h
+	xor ax, ax  ;0 ax reg (xor ax, ax = smaller (2b vs 5b) and addition of clearing CF)
 	mov [put_pixel_func_flag], ax 
 
 	mov  ax, 320

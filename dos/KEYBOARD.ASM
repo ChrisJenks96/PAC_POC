@@ -4,6 +4,7 @@ get_key:
 	xor ax, ax ;0 ax reg
 	mov ax, 073h ; 115 [s] key
 	int 16h ;keyboard read interrupt
+	ret
 
 section .data ;put data here
 	
