@@ -8,20 +8,19 @@ _start: ;put code here
 	jmp load_bmp_open_file
 
 vga_main:
-	mov ax, 0013h ;VGA mode
-	int 10h ; 320x200x256col
-
 	mov ax, 0A000h ;video memory address SVGA
 	mov es, ax ;ES register now points to video memory
 	
 	jmp init_update
 
 init_update: ;call this before calling update loop, resets all vars
+	;used as a clear screen
+	mov ax, 0013h ;VGA mode
+	int 10h ; 320x200x256col
+
 	mov si, bmp_pixels ;reset the si pointer to start of the bmp pixel data
 	mov ax, [x] ;reset x
-	inc ax ;testing sprite movement on x (remove later) ... must sync x & orig_x
 	mov bx, [orig_x]
-	inc bx ;testing sprite movement on x (remove later) ... 
 	mov ax, bx
 	mov ax, [y] ;reset y
 	mov bx, [orig_y]
@@ -30,8 +29,11 @@ init_update: ;call this before calling update loop, resets all vars
 	jmp update
 
 update: ;loop through all update/render funcs
+	call get_key ;AX will hold the key we pressed...
+	call move_player ;MUST CALL STRAIGHT AFTER 'get_key', move the player based on the ax value
+	
+	;put_pixel last to be drawn
 	jmp put_pixel ;render out the sprite
-	;call get_key ;WORK ON THIS, USER INPUT VIA KEYBOARD INT 16H !!!!!
 
 pixel_new_row: ;used in put pixel to increment y
 	mov bx, [orig_x] ;set x to 0
