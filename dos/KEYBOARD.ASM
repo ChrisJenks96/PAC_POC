@@ -33,7 +33,7 @@ move_player_ret: ;must call the key press condition is not met (for program flow
 ;orig_[X] and [X] must be kept synced, always change both
 inc_x_player:
 	mov ax, [x]
-	add ax, 05h ; x += 1
+	add ax, 02h ; x += 1
 	mov [x], ax
 	mov ax, [orig_x]
 	inc ax ; orig_x += 1
@@ -42,7 +42,7 @@ inc_x_player:
 
 dec_x_player:
 	mov ax, [x]
-	sub ax, 05h ; x -= 1
+	sub ax, 02h ; x -= 1
 	mov [x], ax
 	mov ax, [orig_x]
 	dec ax ; orig_x -= 1
@@ -51,7 +51,7 @@ dec_x_player:
 
 inc_y_player:
 	mov ax, [y]
-	add ax, 05h ; y += 1
+	add ax, 02h ; y += 1
 	mov [y], ax
 	mov ax, [orig_y]
 	inc ax ; y += 1
@@ -60,7 +60,7 @@ inc_y_player:
 
 dec_y_player:
 	mov ax, [y]
-	sub ax, 05h ; y -= 1
+	sub ax, 02h ; y -= 1
 	mov [y], ax
 	mov ax, [orig_y]
 	dec ax ; orig_y -= 1

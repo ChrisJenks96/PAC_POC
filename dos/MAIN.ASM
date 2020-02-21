@@ -3,34 +3,35 @@
 
 section .text
 org 100h
-bits 16
 global _start
 _start: ;put code here
 	jmp load_bmp_open_file
 
-delay:
-	system_time:   
-	  mov  ah, 2ch ;GET SYSTEM TIME.
-	  int  21h ;RETURN HUNDREDTHS IN DL.
-  ;CHECK IF 20 HUNDREDTHS HAVE PASSED. 
-  xor  dh, dh   ;MOVE HUNDREDTHS...
-  mov  ax, dx   ;...TO AX REGISTER.
-  div  bl       ;HUNDREDTHS / 20.
-  cmp  ah, 0    ;REMAINDER.
-  jnz  system_time
-  ret
+waitforRetrace:
+    mov dx, 03dah
+waitforRetraceEnd:
+    in al, dx
+    and al, 08h
+    jnz waitforRetraceEnd
+waitforRetraceStart:
+    in al, dx
+    and al, 08h
+    jz waitforRetraceStart
+    ret
 
+;8088 4.77 MHz 	315 cycles on DOSBOX
 vga_main:
+	bits 16
+	;used as a clear screen
+	mov ax, 0013h ;VGA mode
+	int 10h ; 320x200x256col
+
 	mov ax, 0A000h ;video memory address SVGA
 	mov es, ax ;ES register now points to video memory
 	jmp init_update
 
 init_update: ;call this before calling update loop, resets all vars
-	call pixel_frame_end ; delay the drawing
-	
-	;used as a clear screen
-	mov ax, 0013h ;VGA mode
-	int 10h ; 320x200x256col
+	call waitforRetrace  ; destroys al, dx
 
 	mov si, bmp_pixels ;reset the si pointer to start of the bmp pixel data
 	mov ax, [x] ;reset x
@@ -126,11 +127,6 @@ pixel_new_row: ;used in put pixel to increment y
 	cmp ax, 01h
 	je put_pixel ;if we came out of put_pixel(1), we want to continue to put_pixel2
 	jmp put_pixel2 ;else move back to the put_pixel(1) function
-
-pixel_frame_end:
-	mov bl, 1
-	call delay
-	ret
 
 device_end:
 	ret
