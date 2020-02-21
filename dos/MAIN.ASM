@@ -26,6 +26,8 @@ vga_main:
 	jmp init_update
 
 init_update: ;call this before calling update loop, resets all vars
+	call pixel_frame_end ; delay the drawing
+	
 	;used as a clear screen
 	mov ax, 0013h ;VGA mode
 	int 10h ; 320x200x256col
@@ -41,8 +43,11 @@ init_update: ;call this before calling update loop, resets all vars
 	jmp update ;jump to update
 
 update: ;loop through all update/render funcs
-	;call get_key ;AX will hold the key we pressed...
-	;call move_player ;MUST CALL STRAIGHT AFTER 'get_key', move the player based on the ax value
+	call get_key ;AX will hold the key we pressed...
+	call move_player_d ;MUST CALL STRAIGHT AFTER 'get_key', move the player based on the ax value
+	call move_player_a
+	call move_player_w
+	call move_player_s
 	call put_pixel ;render out the sprite
 
 	jmp init_update ;call the start of the update loop again
@@ -112,7 +117,7 @@ pixel_new_row: ;used in put pixel to increment y
 	mov bx, [orig_y]
 	add bx, 16
 	cmp ax, bx ;if its equal to 15 (last row), end
-	je pixel_frame_end ;jump back to the start of the update loop again (device_end returns, in this case it will be from this function)
+	je init_update ;jump back to the start of the update loop again (device_end returns, in this case it will be from this function)
 
 	inc ax ;plus 1 to the y
 	mov [y], ax
@@ -123,7 +128,7 @@ pixel_new_row: ;used in put pixel to increment y
 	jmp put_pixel2 ;else move back to the put_pixel(1) function
 
 pixel_frame_end:
-	mov bl, 50
+	mov bl, 1
 	call delay
 	ret
 
@@ -137,9 +142,6 @@ section .data ;put data here
 	orig_x dw 20
 	orig_y dw 20
 	put_pixel_func_flag db 0 ;don't modify! this track which put_pixel we return to after pixel_new_row
-
-	refresh_rate db 70
-	wait_secs db 5
 
 section .bss ;put uninit data here
 
