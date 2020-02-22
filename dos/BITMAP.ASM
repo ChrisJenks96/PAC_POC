@@ -7,29 +7,31 @@ section .text
 
 load_bmp_open_file:
 	mov ax, 03d00h ;open file / read only
-	mov dx, filename ;offset to file
 	int 021h
 
 	mov [handle], ax
 	mov ah, 03fh	;read bmp pixels
 	mov bx, [handle]
-	mov dx, bmp_pixels
+	ret
+
+load_bmp_data:
 	mov cx, 128
 	int 021h
 	cmp ax, 0
 	je device_end
-
 	mov ah, 03eh ;close file
 	mov bx, handle
 	int 021h
-
-	jmp vga_main
+	ret
 
 section .data ;put data here
 	;GOT 640 KB OF SPACE AVAILABLE (WHEN COMPILED UNDER .COM)
 	
-	bmp_pixels times 128 dw 0 ;(16 x 16 mario test)
+	player_fn db 'PLAYER.BIN', 00h
+	player_spr times 128 dw 0 ;(16 x 16 mario test)
+
+	platform_fn db 'PLATFORM.BIN', 00h
+	platform_spr times 128 dw 0
 
 	handle dw 0
-	filename db 'DUMP.BIN', 00h
 section .bss ;put uninit data here

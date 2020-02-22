@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 {
 	FILE* f, *fo;
 	uint8_t pix[128] = {0};
-	uint8_t pix2[256] = {0};
+	//uint8_t pix2[256] = {0};
 	int i, x, y, pix_id = 0;
 	unsigned int pix_offset;
 	f = fopen(argv[1], "rb");
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 		fseek(f, pix_offset, SEEK_SET);
 		fread(&pix[0], 128, 1, f);
 		fclose(f);
-		fo = fopen("DUMP.BIN", "wb");
+		fo = fopen(argv[2], "wb");
 		for (i = 0; i <	128; i++)
 		{
 			//8 bits contain 2 4 bit (16 val) colours
@@ -51,21 +51,7 @@ int main(int argc, char** argv)
 			//This is experimental 4 bit writing
 			pix[pix_id] = MERGE_4BIT_COL(second_col, first_col);
 			pix_id++;
-
-			//8 bit writing
-			/*pix2[pix_id] = second_col;
-			pix2[pix_id+1] = first_col;
-			pix_id+=2;*/
 		}
-
-		//8 bit
-		//reverse the y and write the bitmap backwards (y only)
-		//16 / 2 - 16 pixels but 4 bits per col (2 cols per byte)
-		/*for (y = 0; y < 16; y++){
-			for (x = 0; x < 16; x++){
-				fwrite(&pix2[((16-(y+1))*16)+x], 1, 1, fo);
-			}
-		}*/
 
 		//4 bit, upside down, remember to flip image
 		fwrite(&pix[0], 128, 1, fo);

@@ -5,19 +5,17 @@ section .text
 org 100h
 global _start
 _start: ;put code here
-	jmp load_bmp_open_file
-
-waitforRetrace:
-    mov dx, 03dah
-waitforRetraceEnd:
-    in al, dx
-    and al, 08h
-    jnz waitforRetraceEnd
-waitforRetraceStart:
-    in al, dx
-    and al, 08h
-    jz waitforRetraceStart
-    ret
+	mov dx, player_fn ;file name to load
+	call load_bmp_open_file ;load the file and pointer
+	mov dx, player_spr ;the sprite we want to load the data into
+	call load_bmp_data ;call the bitmap data loader from the file we've opened
+	
+	mov dx, platform_fn
+	call load_bmp_open_file
+	mov dx, platform_spr
+	call load_bmp_data
+	
+	jmp vga_main
 
 ;8088 4.77 MHz 	315 cycles on DOSBOX
 vga_main:
@@ -33,7 +31,6 @@ vga_main:
 init_update: ;call this before calling update loop, resets all vars
 	call waitforRetrace  ; destroys al, dx
 
-	mov si, bmp_pixels ;reset the si pointer to start of the bmp pixel data
 	mov ax, [x] ;reset x
 	mov bx, [orig_x]
 	mov [x], bx
@@ -49,6 +46,10 @@ update: ;loop through all update/render funcs
 	call move_player_a
 	call move_player_w
 	call move_player_s
+
+	mov si, player_spr ;reset the si pointer to start of the bmp pixel data
+
+	mov cx, ;THIS WILL ERROR ON THIS LINE... INTENTIONAL, USE CX TO HOLD A POINTER TO AN ARRAY OF (X,Y,ORIG_X,ORIG_Y) FOR EACH SPRITE... (22/02/2020) YOUR WELCOME XO
 	call put_pixel ;render out the sprite
 
 	jmp init_update ;call the start of the update loop again
@@ -130,6 +131,18 @@ pixel_new_row: ;used in put pixel to increment y
 
 device_end:
 	ret
+
+waitforRetrace:
+    mov dx, 03dah
+waitforRetraceEnd:
+    in al, dx
+    and al, 08h
+    jnz waitforRetraceEnd
+waitforRetraceStart:
+    in al, dx
+    and al, 08h
+    jz waitforRetraceStart
+    ret
 
 section .data ;put data here
 	;for x & y (& orig_) set -1 of dest coords, we have to increment x off the bat in put_pixel for 2x checks
