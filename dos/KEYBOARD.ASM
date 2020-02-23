@@ -32,39 +32,39 @@ move_player_ret: ;must call the key press condition is not met (for program flow
 
 ;orig_[X] and [X] must be kept synced, always change both
 inc_x_player:
-	mov ax, [x]
+	mov ax, [pos_array+00h]
 	add ax, 02h ; x += 1
-	mov [x], ax
-	mov ax, [orig_x]
+	mov [pos_array+00h], ax
+	mov ax, [pos_array+04h]
 	inc ax ; orig_x += 1
-	mov [orig_x], ax
+	mov [pos_array+04h], ax
 	ret
 
 dec_x_player:
-	mov ax, [x]
+	mov ax, [pos_array+00h]
 	sub ax, 02h ; x -= 1
-	mov [x], ax
-	mov ax, [orig_x]
+	mov [pos_array+00h], ax
+	mov ax, [pos_array+04h]
 	dec ax ; orig_x -= 1
-	mov [orig_x], ax
+	mov [pos_array+04h], ax
 	ret
 
 inc_y_player:
-	mov ax, [y]
+	mov ax, [pos_array+02h]
 	add ax, 02h ; y += 1
-	mov [y], ax
-	mov ax, [orig_y]
+	mov [pos_array+02h], ax
+	mov ax, [pos_array+06h]
 	inc ax ; y += 1
-	mov [orig_y], ax
+	mov [pos_array+06h], ax
 	ret
 
 dec_y_player:
-	mov ax, [y]
+	mov ax, [pos_array+02h]
 	sub ax, 02h ; y -= 1
-	mov [y], ax
-	mov ax, [orig_y]
+	mov [pos_array+02h], ax
+	mov ax, [pos_array+06h]
 	dec ax ; orig_y -= 1
-	mov [orig_y], ax
+	mov [pos_array+06h], ax
 	ret
 
 section .data ;put data here
