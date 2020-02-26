@@ -43,8 +43,8 @@ update: ;loop through all update/render funcs
 	call get_key ;AX will hold the key we pressed...
 	call move_player_d ;MUST CALL STRAIGHT AFTER 'get_key', move the player based on the ax value
 	call move_player_a
-	call move_player_w
-	call move_player_s
+	;call move_player_w
+	;call move_player_s
 
 	mov si, platform_spr
 	mov di, pos_array+08h
@@ -54,6 +54,11 @@ update: ;loop through all update/render funcs
 	mov si, player_spr ;reset the si pointer to start of the bmp pixel data
 	mov di, pos_array ;player sprite is base 0 offset in pos array
 	call put_pixel ;render out the sprite
+
+	;check to see if the jump flag has been set from the spacebar
+	mov al, [player_jump_flag]
+	cmp al, 01h
+	je player_jump
 
 	jmp init_update ;call the start of the update loop again
 
@@ -130,7 +135,7 @@ pixel_new_row: ;used in put pixel to increment y
 	mov ax, [put_pixel_func_flag]
 	cmp ax, 01h
 	je put_pixel ;if we came out of put_pixel(1), we want to continue to put_pixel2
-	jmp put_pixel2 ;else move back to the put_pixel(1) function
+	jmp put_pixel2 ;else move back to the put_pixel(1) function	
 
 put_pixel_end: ;return from the function (under a diff name)
 device_end:
@@ -154,9 +159,10 @@ section .data ;put data here
 	pos_array dw 20, 20, 20, 20, 20, 37, 20, 36
 	pos_array_index db 0 ;used to offset the pos_array above (+=8 -=8 (4 words = 8 bytes))
 
+	player_jump_flag db 0 ;this is a jump boolean for the player jumping up
 	put_pixel_func_flag db 0 ;don't modify! this track which put_pixel we return to after pixel_new_row
 
 section .bss ;put uninit data here
 
 %include 'BITMAP.ASM'
-%include 'KEYBOARD.ASM'
+%include 'PLAYER.ASM'
