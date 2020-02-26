@@ -32,9 +32,10 @@ move_player_s:
 	je dec_y_player ;if 's' is  pressed, y -= 1
 	ret
 
-jump_player: 
+player_jump_key_press: 
 	cmp ax, 03920h ;test if the spacebar is pressed
-	je inc_jump_player ;play out the jump routine
+	je toggle_player_jump_flag ;play out the jump routine
+	ret
 
 move_player_ret: ;must call the key press condition is not met (for program flow)
 	ret ;return out of the move_player_[X] func as we call it 
@@ -76,16 +77,55 @@ dec_y_player:
 	mov [di+06h], ax
 	ret
 
-inc_jump_player:
+toggle_player_jump_flag: ;when the player presses the space we need to toggle it on (inc val 0 to 1)
 	mov al, [player_jump_flag]
 	inc al
 	mov [player_jump_flag], al
 	ret
 
 player_jump:
-	int 021h
+	mov al, [player_jump_flag]
+	cmp al, 01h
+	je player_jump_isground
+	ret
+	
+;check if our players x is the same as the ground value,
+;if so, set the player's is ground flag to true, else if not we are mid jump
+player_jump_isground:
+	mov ax, [di+02h] ;move the players y into AL (conv [di] from word to byte) XX 0X
+	mov [player_orig_y_pos], ax ;log the players y position to revert back
+	mov bx, [player_ground_y] ;move the target y to tell us if the player is n the floor
+	cmp ax, bx
+	je player_jump_from_ground
+	ret
+
+player_jump_from_ground:
+	mov bx, [player_max_y]
+	cmp ax, bx
+	jge player_jump_fall ;if the player has met or surpassed the max height
+	sub ax, 01h ;increment the player jump value 
+	mov [di+02h], ax ;move the new y to the y
+	mov [di+06h], ax ;move the new y to the orig_y
+	ret
+
+player_jump_fall:
+	add ax, 01h ;decrement the player down as we fall
+	mov [di+02h], ax ;move the new y to the y
+	mov [di+06h], ax ;move the new y to the orig_y
+	mov bx, [player_ground_y] 
+	cmp ax, bx
+	jne player_jump_done
+
+player_jump_done:
+	mov al, [player_jump_flag]
+	dec al
+	mov [player_jump_flag], al
 	ret
 
 section .data ;put data here
-	
+	player_orig_y_pos dw 0 ;log the players y before he jumps
+	player_ground_y dw 20 ;what is the ground y value (where the player sits)
+	player_max_y dw 40 ;the maximum height the player can jump too from start pos
+	player_is_grounded db 0 ;the flag that tells us if the player is grounded
+
 section .bss ;put uninit data here

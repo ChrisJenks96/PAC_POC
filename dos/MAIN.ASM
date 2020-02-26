@@ -27,10 +27,13 @@ vga_main:
 	mov ax, 0A000h ;video memory address SVGA
 	mov es, ax ;ES register now points to video memory
 
+	mov si, platform_spr
+	mov di, pos_array
+
 	jmp init_update
 
 init_update: ;call this before calling update loop, resets all vars
-	call waitforRetrace  ; destroys al, dx
+	;call waitforRetrace  ; destroys al, dx
 
 	mov bx, [di+04h] ;reset x to orig_x
 	mov [di+00h], bx
@@ -41,10 +44,16 @@ init_update: ;call this before calling update loop, resets all vars
 
 update: ;loop through all update/render funcs
 	call get_key ;AX will hold the key we pressed...
+	
 	call move_player_d ;MUST CALL STRAIGHT AFTER 'get_key', move the player based on the ax value
 	call move_player_a
 	;call move_player_w
 	;call move_player_s
+
+	;check to see if the jump flag has been set from the spacebar
+	;then call the jump routine which will check and perform a jump
+	call player_jump_key_press
+	call player_jump
 
 	mov si, platform_spr
 	mov di, pos_array+08h
@@ -54,11 +63,6 @@ update: ;loop through all update/render funcs
 	mov si, player_spr ;reset the si pointer to start of the bmp pixel data
 	mov di, pos_array ;player sprite is base 0 offset in pos array
 	call put_pixel ;render out the sprite
-
-	;check to see if the jump flag has been set from the spacebar
-	mov al, [player_jump_flag]
-	cmp al, 01h
-	je player_jump
 
 	jmp init_update ;call the start of the update loop again
 
