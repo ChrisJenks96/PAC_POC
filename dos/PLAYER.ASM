@@ -79,7 +79,7 @@ dec_y_player:
 
 toggle_player_jump_flag: ;when the player presses the space we need to toggle it on (inc val 0 to 1)
 	mov al, [player_jump_flag]
-	inc al
+	mov al, 01h
 	mov [player_jump_flag], al
 	ret
 
@@ -88,44 +88,69 @@ player_jump:
 	cmp al, 01h
 	je player_jump_isground
 	ret
-	
+
 ;check if our players x is the same as the ground value,
 ;if so, set the player's is ground flag to true, else if not we are mid jump
 player_jump_isground:
+	mov bx, [player_is_grounded] ;check to see if we've jumped
 	mov ax, [di+02h] ;move the players y into AL (conv [di] from word to byte) XX 0X
+	cmp bx, 00h ;if we've already jumped, go to jump sequence
+	je player_jump_from_ground
+	dec bx ; player_is_grounded = 0 (we are jumping)
+	mov [player_is_grounded], bx ;if we havent jumped, make sure we check the flag that we have jumped
 	mov [player_orig_y_pos], ax ;log the players y position to revert back
-	mov bx, [player_ground_y] ;move the target y to tell us if the player is n the floor
-	cmp ax, bx
 	je player_jump_from_ground
 	ret
 
 player_jump_from_ground:
 	mov bx, [player_max_y]
 	cmp ax, bx
-	jge player_jump_fall ;if the player has met or surpassed the max height
+	jle player_jump_fall ;if the player has met or surpassed the max height
+	mov bx, [player_is_falling]
+	cmp bx, 00h
+	je player_jump_up
+	jmp player_jump_fall
+	ret
+
+player_jump_up:
 	sub ax, 01h ;increment the player jump value 
 	mov [di+02h], ax ;move the new y to the y
 	mov [di+06h], ax ;move the new y to the orig_y
 	ret
 
 player_jump_fall:
+	;make sure we update it, so we dont fall 1 pixel and then climb again
+	cmp bx, 00h
+	je player_jump_is_falling_flag_on
 	add ax, 01h ;decrement the player down as we fall
 	mov [di+02h], ax ;move the new y to the y
 	mov [di+06h], ax ;move the new y to the orig_y
-	mov bx, [player_ground_y] 
+	mov bx, [player_orig_y_pos] 
 	cmp ax, bx
-	jne player_jump_done
+	jge player_jump_done
+	ret
+
+player_jump_is_falling_flag_on:
+	mov bx, 01h
+	mov [player_is_falling], bx
+	ret
 
 player_jump_done:
-	mov al, [player_jump_flag]
-	dec al
-	mov [player_jump_flag], al
+	mov ax, [player_jump_flag] ;reset the jumping flag
+	mov ax, 00h
+	mov [player_jump_flag], ax
+	mov ax, [player_is_falling] ;reset the falling flag
+	mov ax, 00h
+	mov [player_is_falling], ax
+	mov ax, [player_is_grounded] ;reset the grounded flag
+	mov ax, 01h
+	mov [player_is_grounded], ax
 	ret
 
 section .data ;put data here
 	player_orig_y_pos dw 0 ;log the players y before he jumps
-	player_ground_y dw 20 ;what is the ground y value (where the player sits)
-	player_max_y dw 40 ;the maximum height the player can jump too from start pos
-	player_is_grounded db 0 ;the flag that tells us if the player is grounded
+	player_max_y dw 5 ;the maximum height the player can jump too from start pos
+	player_is_grounded db 1 ;the flag that tells us if the player is grounded
+	player_is_falling db 0 ;the flag when the top has been reached and we're falling
 
 section .bss ;put uninit data here
