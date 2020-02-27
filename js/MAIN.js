@@ -2,10 +2,33 @@
 
 var main_sprite;
 
+//black, blue, green, cyan, red, magenta, brown, grey, 
+//dark grey, light blue, light green, light cyan, light red,
+//light magenta, yellow, white
+//this is an array of RGB values for CGA palette above
+var vga_palette = [
+    0x00, 0x00, 0x00, //black 0
+    0x00, 0x00, 0xA8, //blue 1
+    0x00, 0xA8, 0x00, //green 2
+    0x00, 0xA8, 0xA8, //cyan 3
+    0xA8, 0x00, 0x00, //red 4
+    0xA8, 0xA8, 0x00, //magenta 5
+    0xA8, 0x54, 0x00, //brown 6
+    0xA8, 0xA8, 0xA8, //grey 7
+    0x54, 0x54, 0x54, //dark grey 8
+    0x54, 0x54, 0xFC, //light blue 9
+    0x54, 0xFC, 0x54, //light green 10
+    0x54, 0xFC, 0xFC, //light cyan 11
+    0xFC, 0x54, 0x54, //light red 12
+    0xFC, 0x54, 0xFC, //light magenta 13
+    0xFC, 0xFC, 0x54, //yellow 14
+    0xFC, 0xFC, 0xFC //white 15
+];
+
 function _start()
 {
     game_area.start();
-    main_sprite = new component(16, 16, "red", 10, 10);
+    main_sprite = new component(16, 16, PLAYER_buffer, PLAYER_buffer_size, 10, 10);
 }
 
 //start by making the game screen area on the HTML page
@@ -31,17 +54,36 @@ var game_area =
 }
 
 //adds a component to the game area canvas we are working on
-function component(width, height, color, x, y)
+function component(width, height, pix, pix_size, x, y)
 {
     this.width = width;
     this.height = height;
     this.x = x;
     this.y = y;
+   
     //this is to be called every frame to update component 
     this.update = function (){
         ctx = game_area.context;
-        ctx.fillStyle = color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        var image_data = ctx.createImageData(this.width, this.height);
+        //16 colours, 2 cols per byte (4 bits each)
+        //bit shift 4 (* 16) which will get 0-255
+        var c = 0;
+        for (var i = 0; i < pix_size; i++)
+        {
+            var first_col = (pix[i] >> 4);
+            var second_col = (pix[i] & 0x0F);
+            image_data.data[c+0] = vga_palette[(first_col*3)]; //r
+            image_data.data[c+1] = vga_palette[(first_col*3)+1]; //g
+            image_data.data[c+2] = vga_palette[(first_col*3)+2]; //b
+            image_data.data[c+3] = 255; //a
+            image_data.data[c+4] = vga_palette[(second_col*3)]; //r
+            image_data.data[c+5] = vga_palette[(second_col*3)+1]; //g
+            image_data.data[c+6] = vga_palette[(second_col*3)+2]; //b
+            image_data.data[c+7] = 255; //a
+            c+=8;
+        }
+
+        ctx.putImageData(image_data, this.x, this.y);
     }
 }
 
