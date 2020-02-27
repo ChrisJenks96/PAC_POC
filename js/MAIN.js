@@ -78,7 +78,10 @@ function component(width, height, pix, pix_size, x, y)
     }
 
     //this is to be called every frame to update component 
-    this.update = function (){
+    this.update = function () {
+
+        this.new_pos();
+
         ctx = game_area.context;
         ctx.imageSmoothingEnabled = false;
         var image_data = ctx.createImageData(this.width, this.height);
@@ -119,8 +122,7 @@ function game_area_update()
 
     //clear canvas
     game_area.clear();
-    //render sprite
-    main_sprite.new_pos();
+    //update and render sprite
     main_sprite.update();
     //update render platform
     platform.update();

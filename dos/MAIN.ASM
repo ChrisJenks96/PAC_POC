@@ -160,7 +160,7 @@ waitforRetraceStart:
 section .data ;put data here
 	;x, y, orig_x, orig_y format
 	;for x & y (& orig_) set -1 of dest coords, we have to increment x off the bat in put_pixel for 2x checks
-	pos_array dw 20, 20, 20, 20, 20, 37, 20, 36
+	pos_array dw 20, 20, 20, 20, 20, 37, 20, 37
 	pos_array_index db 0 ;used to offset the pos_array above (+=8 -=8 (4 words = 8 bytes))
 
 	player_jump_flag db 0 ;this is a jump boolean for the player jumping up
