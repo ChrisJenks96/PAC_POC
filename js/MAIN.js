@@ -29,8 +29,8 @@ var platform;
 function _start()
 {
     game_area.start();
-    main_sprite = new component(16, 16, PLAYER_buffer, PLAYER_buffer_size, 20, 20);
-    platform = new component(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20, 37);
+    main_sprite = new component(16, 16, PLAYER_buffer, PLAYER_buffer_size, 20, 10, true);
+    platform = new component(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20, 37, false);
 }
 
 //start by making the game screen area on the HTML page
@@ -62,7 +62,7 @@ var game_area =
 }
 
 //adds a component to the game area canvas we are working on
-function component(width, height, pix, pix_size, x, y)
+function component(width, height, pix, pix_size, x, y, use_grav)
 {
     this.width = width;
     this.height = height;
@@ -70,11 +70,57 @@ function component(width, height, pix, pix_size, x, y)
     this.y = y;
     this.speedx = 0;
     this.speedy = 0;
+    this.gravity = 0.05
+    this.gravity_speed = 0;
+    this.gravity_use = use_grav;
    
     this.new_pos = function ()
     {
+        //if we collide with the platform, stop the player from falling through
+        if (!this.collision(platform)) {
+            //if the sprite isn't affect by gravity, dont apply it
+            if (this.gravity_use)
+                this.speedy = 1;//this.gravity_speed += this.gravity;
+        }
+
+        //if we come from the right, stop us going into the object
+        if (this.x < ((platform.x + platform.width) + 2) &&
+               (this.y > (platform.y + 1) && this.y < ((platform.y + platform.height))))
+            this.x = (platform.x + platform.width) + 2;
+        //if we come from the left, stop us going into the object
+        else if (((this.x - this.width) > platform.x - 2) &&
+            (this.y > (platform.y + 1) && this.y < ((platform.y + platform.height))))
+            this.x = (platform.x - platform.width) - 2;
+
         this.x += this.speedx;
-        this.y += this.speedy;
+        this.y += this.speedy + this.gravity_speed;
+        //if (this.gravity_use)
+            //this.hit_floor();
+    }
+
+    this.collision = function (other)
+    {
+        var left = this.x;
+        var right = this.x + this.width;
+        var top = this.y;
+        var bottom = this.y + this.height;
+        var other_left = other.x;
+        var other_right = other.x + other.width;
+        var other_top = other.y;
+        var other_bottom = other.y + other.height;
+        var collide = true;
+        if ((bottom < other_top) || (top > other_bottom) || (right < other_left) || (left > other_right))
+            collide = false;
+        return collide;
+    }
+
+    this.hit_floor = function ()
+    {
+        //37 height of base platform
+        //+1 to offset the black boundary around the sprite (ASM refresh hack, not JS related)
+        var floor_y = platform.y - (platform.height - 1);
+        if (this.y > floor_y)
+            this.y = floor_y;
     }
 
     //this is to be called every frame to update component 
@@ -117,8 +163,10 @@ function game_area_update()
 {
     //move the player sprite
     player_move_zero();
-    if (game_area.key && game_area.key == 37) { main_sprite.speedx = -1; }
-    if (game_area.key && game_area.key == 39) { main_sprite.speedx = 1; }
+    if (game_area.key == 37)
+        main_sprite.speedx = -1;
+    if (game_area.key == 39)
+        main_sprite.speedx = 1;
 
     //clear canvas
     game_area.clear();
