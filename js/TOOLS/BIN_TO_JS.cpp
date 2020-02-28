@@ -64,6 +64,7 @@ int main(int argc, char** argv)
 			fread(&buffer[0], s2, 1, f);
 			write_bin_to_js(buffer, argv[2], s2);
 			fclose(f);
+			free(buffer);
 		}
 	}
 
