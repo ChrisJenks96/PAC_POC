@@ -83,19 +83,8 @@ function component(width, height, pix, pix_size, x, y, use_grav)
                 this.speedy = 1;//this.gravity_speed += this.gravity;
         }
 
-        //if we come from the right, stop us going into the object
-        if (this.x < ((platform.x + platform.width) + 2) &&
-               (this.y > (platform.y + 1) && this.y < ((platform.y + platform.height))))
-            this.x = (platform.x + platform.width) + 2;
-        //if we come from the left, stop us going into the object
-        else if (((this.x - this.width) > platform.x - 2) &&
-            (this.y > (platform.y + 1) && this.y < ((platform.y + platform.height))))
-            this.x = (platform.x - platform.width) - 2;
-
         this.x += this.speedx;
         this.y += this.speedy + this.gravity_speed;
-        //if (this.gravity_use)
-            //this.hit_floor();
     }
 
     this.collision = function (other)
@@ -114,22 +103,14 @@ function component(width, height, pix, pix_size, x, y, use_grav)
         return collide;
     }
 
-    this.hit_floor = function ()
-    {
-        //37 height of base platform
-        //+1 to offset the black boundary around the sprite (ASM refresh hack, not JS related)
-        var floor_y = platform.y - (platform.height - 1);
-        if (this.y > floor_y)
-            this.y = floor_y;
-    }
-
     //this is to be called every frame to update component 
-    this.update = function () {
-
+    this.update = function ()
+    {
+        //append the speed velocity x & y onto the position of the component
+        //check against general bounding boxes of other components in the scene
         this.new_pos();
 
         ctx = game_area.context;
-        ctx.imageSmoothingEnabled = false;
         var image_data = ctx.createImageData(this.width, this.height);
         //16 colours, 2 cols per byte (4 bits each)
         //bit shift 4 (* 16) which will get 0-255
@@ -163,10 +144,35 @@ function game_area_update()
 {
     //move the player sprite
     player_move_zero();
+    //preferences for the way the player deals with the collisions
+    var main_sprite_y_offset = main_sprite.width >> 2; //div by 2
+    var platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
+    //left key
     if (game_area.key == 37)
+    {
+        //more specific collision check for when we are falling off the platform, the collision will be true but 
+        //we can still move inside the platform which we don't want.
+
+        //if we come from the right, stop us going into the object
+        if (main_sprite.x < ((platform.x + platform.width) + platform_width_offset) &&
+            ((main_sprite.y + main_sprite_y_offset) > (platform.y + 1) &&
+                (main_sprite.y - main_sprite_y_offset) < ((platform.y + platform.height))))
+                    main_sprite.x = (platform.x + platform.width) + platform_width_offset;
+        //speed scalar direction for moving the player left
         main_sprite.speedx = -1;
+    }
+
+    //right key
     if (game_area.key == 39)
+    {
+        //if we come from the left, stop us going into the object
+        if ((main_sprite.x + main_sprite.width) > (platform.x - platform_width_offset) &&
+            ((main_sprite.y + main_sprite_y_offset) > (platform.y + 1) &&
+                (main_sprite.y - main_sprite_y_offset) < ((platform.y + platform.height))))
+            main_sprite.x = (platform.x - main_sprite.width) - platform_width_offset;
+        //speed scalar direction for moving the player right
         main_sprite.speedx = 1;
+    }
 
     //clear canvas
     game_area.clear();
