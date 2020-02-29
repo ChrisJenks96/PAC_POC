@@ -24,6 +24,37 @@ var vga_palette =
 
 var main_sprite;
 var platform;
+//bool for tracking player_jump
+var player_jump = false;
+//for tracking original jump position
+var main_sprite_old_y = 0;
+var main_sprite_max_jump_height = 12; 
+
+//array of keys we use for game and windows.keydown/up stores
+var keys = 
+{
+    space: false,
+    left: false,
+    right: false
+};
+
+window.onkeydown = function(e) 
+{
+    var kc = e.keyCode;
+    e.preventDefault();
+    if      (kc === 65) keys.left = true;  // only one key per event
+    else if (kc === 68) keys.right = true;
+    else if (kc === 32) keys.space = true;
+};
+
+window.onkeyup = function(e) 
+{
+    var kc = e.keyCode;
+    e.preventDefault();
+    if      (kc === 65) keys.left = false;  // only one key per event
+    else if (kc === 68) keys.right = false;
+    else if (kc === 32) keys.space = false;
+};
 
 //the function we invoke in HTML
 function _start()
@@ -46,12 +77,6 @@ var game_area =
             document.body.childNodes[0]);
         //call game area update every 20ms (50 fps)
         this.interval = setInterval(game_area_update, 20);
-        window.addEventListener('keydown', function (e) {
-            game_area.key = e.keyCode;
-        })
-        window.addEventListener('keyup', function (e) {
-            game_area.key = false;
-        })
     },
 
     //clear the canvas (like glClear)
@@ -147,12 +172,12 @@ function game_area_update()
     //preferences for the way the player deals with the collisions
     var main_sprite_y_offset = main_sprite.width >> 2; //div by 2
     var platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
-    //left key
-    if (game_area.key == 37)
-    {
-        //more specific collision check for when we are falling off the platform, the collision will be true but 
-        //we can still move inside the platform which we don't want.
 
+    //more specific collision check for when we are falling off the platform, the collision will be true but 
+    //we can still move inside the platform which we don't want.
+    //left key
+    if (keys.left)
+    {
         //if we come from the right, stop us going into the object
         if (main_sprite.x < ((platform.x + platform.width) + platform_width_offset) &&
             ((main_sprite.y + main_sprite_y_offset) > (platform.y + 1) &&
@@ -163,7 +188,7 @@ function game_area_update()
     }
 
     //right key
-    if (game_area.key == 39)
+    if (keys.right)
     {
         //if we come from the left, stop us going into the object
         if ((main_sprite.x + main_sprite.width) > (platform.x - platform_width_offset) &&
@@ -173,6 +198,25 @@ function game_area_update()
         //speed scalar direction for moving the player right
         main_sprite.speedx = 1;
     }
+
+    //space key to jump, set trigger for jumping
+    if (keys.space && !player_jump)
+    {
+        //log the current y
+        main_sprite_old_y = main_sprite.y;
+        player_jump = true;
+        main_sprite.gravity_use = false;
+    }
+
+    if (player_jump)
+    {
+        main_sprite.speedy = -1;
+        if (main_sprite.y < (main_sprite_old_y - main_sprite_max_jump_height)){
+            main_sprite.speedy = 0;
+            player_jump = false;
+            main_sprite.gravity_use = true;
+        }
+    }   
 
     //clear canvas
     game_area.clear();
