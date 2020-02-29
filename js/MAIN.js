@@ -30,7 +30,7 @@ var player_jump = false;
 var main_sprite_jump_y = 0;
 //for testing against new y (used in conjunction with the jumping)
 var main_sprite_old_y = 0;
-var main_sprite_max_jump_height = 12; 
+var main_sprite_max_jump_height = 50; 
 
 //array of keys we use for game and windows.keydown/up stores
 var keys = 
@@ -98,7 +98,6 @@ function component(width, height, pix, pix_size, x, y, use_grav)
     this.speedx = 0;
     this.speedy = 0;
     this.gravity = 0.05
-    this.gravity_speed = 0;
     this.gravity_use = use_grav;
    
     this.new_pos = function ()
@@ -111,7 +110,17 @@ function component(width, height, pix, pix_size, x, y, use_grav)
         }
 
         this.x += this.speedx;
-        this.y += this.speedy + this.gravity_speed;
+        this.y += this.speedy;
+
+        //bounds check
+        if (this.x > (320 - this.width))
+            this.x = 320 - this.width;
+        if (this.x < 0)
+            this.x = 0;
+        if (this.y > (200 - this.height))
+            this.y = 200 - this.height;
+        if (this.y < 0)
+            this.y = 0;
     }
 
     this.collision = function (other)
@@ -202,8 +211,10 @@ function game_area_update()
     }
 
 
-    //log the current y
+   
+    //this flag disables if we are falling which also disables double jumping which is good.
     var can_jump = true;
+    //log the current y
     //we are falling
     if (main_sprite.y > main_sprite_old_y)
         can_jump = false;
@@ -222,6 +233,15 @@ function game_area_update()
 
     if (player_jump)
     {
+        //if we hit the top boundary without bringing gravity back, we're stuck at pixel 0 
+        //because it manipulates y and not speedy
+        if (main_sprite.y <= 0)
+        {
+            main_sprite.gravity_use = true;
+            player_jump = false;
+        }
+        
+        //move the player up till the maximum jump height is achieved, then reintroduce gravity and make us fall.
         main_sprite.speedy = -1;
         if (main_sprite.y < (main_sprite_jump_y - main_sprite_max_jump_height)){
             main_sprite.speedy = 0;
