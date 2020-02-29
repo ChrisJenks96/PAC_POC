@@ -27,6 +27,8 @@ var platform;
 //bool for tracking player_jump
 var player_jump = false;
 //for tracking original jump position
+var main_sprite_jump_y = 0;
+//for testing against new y (used in conjunction with the jumping)
 var main_sprite_old_y = 0;
 var main_sprite_max_jump_height = 12; 
 
@@ -199,11 +201,21 @@ function game_area_update()
         main_sprite.speedx = 1;
     }
 
+
+    //log the current y
+    var can_jump = true;
+    //we are falling
+    if (main_sprite.y > main_sprite_old_y)
+        can_jump = false;
+
+    //sync the y back up
+    main_sprite_old_y = main_sprite.y;
+
     //space key to jump, set trigger for jumping
-    if (keys.space && !player_jump)
+    if (keys.space && !player_jump && can_jump)
     {
-        //log the current y
-        main_sprite_old_y = main_sprite.y;
+        //log the y for the jumping
+        main_sprite_jump_y = main_sprite.y;
         player_jump = true;
         main_sprite.gravity_use = false;
     }
@@ -211,7 +223,7 @@ function game_area_update()
     if (player_jump)
     {
         main_sprite.speedy = -1;
-        if (main_sprite.y < (main_sprite_old_y - main_sprite_max_jump_height)){
+        if (main_sprite.y < (main_sprite_jump_y - main_sprite_max_jump_height)){
             main_sprite.speedy = 0;
             player_jump = false;
             main_sprite.gravity_use = true;
