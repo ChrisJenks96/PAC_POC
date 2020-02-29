@@ -31,7 +31,9 @@ var main_sprite_jump_y = 0;
 //for testing against new y (used in conjunction with the jumping)
 var main_sprite_old_y = 0;
 var main_sprite_max_jump_height = 50; 
-
+//preferences for the way the player deals with the collisions
+var main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
+var platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
 //array of keys we use for game and windows.keydown/up stores
 var keys = 
 {
@@ -62,8 +64,9 @@ window.onkeyup = function(e)
 function _start()
 {
     game_area.start();
-    main_sprite = new component(16, 16, PLAYER_buffer, PLAYER_buffer_size, 20, 10, true);
-    platform = new component(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20, 37, false);
+    main_sprite = new sprite(16, 16, PLAYER_buffer, PLAYER_buffer_size, 20, 10, true);
+    platform = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20, 37, false);
+    platform2 = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 80, 160, false);
 }
 
 //start by making the game screen area on the HTML page
@@ -89,7 +92,7 @@ var game_area =
 }
 
 //adds a component to the game area canvas we are working on
-function component(width, height, pix, pix_size, x, y, use_grav)
+function sprite(width, height, pix, pix_size, x, y, use_grav)
 {
     this.width = width;
     this.height = height;
@@ -103,7 +106,7 @@ function component(width, height, pix, pix_size, x, y, use_grav)
     this.new_pos = function ()
     {
         //if we collide with the platform, stop the player from falling through
-        if (!this.collision(platform)) {
+        if (!this.collision(platform) && !this.collision(platform2)) {
             //if the sprite isn't affect by gravity, dont apply it
             if (this.gravity_use)
                 this.speedy = 1;//this.gravity_speed += this.gravity;
@@ -176,24 +179,35 @@ function player_move_zero()
     main_sprite.speedy = 0;
 }
 
+function player_left_collision(other)
+{
+     if ((main_sprite.x - other.width) > other.x && main_sprite.x < ((other.x + other.width) + platform_width_offset) &&
+        ((main_sprite.y + main_sprite_y_offset) > (other.y + 1) &&
+            (main_sprite.y - main_sprite_y_offset) < ((other.y + other.height))))
+                main_sprite.x = (other.x + other.width) + platform_width_offset;
+}
+
+function player_right_collision(other)
+{
+    //if we come from the left, stop us going into the object
+    if ((main_sprite.x + main_sprite.width) < other.x && (main_sprite.x + main_sprite.width) > (other.x - platform_width_offset) &&
+        ((main_sprite.y + main_sprite_y_offset) > (other.y + 1) &&
+            (main_sprite.y - main_sprite_y_offset) < ((other.y + other.height))))
+                main_sprite.x = (other.x - main_sprite.width) - platform_width_offset;
+}
+
 function game_area_update()
 {
     //move the player sprite
     player_move_zero();
-    //preferences for the way the player deals with the collisions
-    var main_sprite_y_offset = main_sprite.width >> 2; //div by 2
-    var platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
-
+    
     //more specific collision check for when we are falling off the platform, the collision will be true but 
     //we can still move inside the platform which we don't want.
     //left key
     if (keys.left)
     {
-        //if we come from the right, stop us going into the object
-        if (main_sprite.x < ((platform.x + platform.width) + platform_width_offset) &&
-            ((main_sprite.y + main_sprite_y_offset) > (platform.y + 1) &&
-                (main_sprite.y - main_sprite_y_offset) < ((platform.y + platform.height))))
-                    main_sprite.x = (platform.x + platform.width) + platform_width_offset;
+        player_left_collision(platform);
+        player_left_collision(platform2);
         //speed scalar direction for moving the player left
         main_sprite.speedx = -1;
     }
@@ -201,11 +215,8 @@ function game_area_update()
     //right key
     if (keys.right)
     {
-        //if we come from the left, stop us going into the object
-        if ((main_sprite.x + main_sprite.width) > (platform.x - platform_width_offset) &&
-            ((main_sprite.y + main_sprite_y_offset) > (platform.y + 1) &&
-                (main_sprite.y - main_sprite_y_offset) < ((platform.y + platform.height))))
-            main_sprite.x = (platform.x - main_sprite.width) - platform_width_offset;
+        player_right_collision(platform);
+        player_right_collision(platform2);
         //speed scalar direction for moving the player right
         main_sprite.speedx = 1;
     }
@@ -240,7 +251,7 @@ function game_area_update()
             main_sprite.gravity_use = true;
             player_jump = false;
         }
-        
+
         //move the player up till the maximum jump height is achieved, then reintroduce gravity and make us fall.
         main_sprite.speedy = -1;
         if (main_sprite.y < (main_sprite_jump_y - main_sprite_max_jump_height)){
@@ -256,4 +267,5 @@ function game_area_update()
     main_sprite.update();
     //update render platform
     platform.update();
+    platform2.update();
 }
