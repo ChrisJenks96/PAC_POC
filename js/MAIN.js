@@ -2,7 +2,7 @@
 //dark grey, light blue, light green, light cyan, light red,
 //light magenta, yellow, white
 //this is an array of RGB values for CGA palette above
-var cga_palette =
+const cga_palette =
 [
     0x00, 0x00, 0x00, //black 0
     0x00, 0x00, 0xA8, //blue 1
@@ -30,10 +30,10 @@ var player_jump = false;
 var main_sprite_jump_y = 0;
 //for testing against new y (used in conjunction with the jumping)
 var main_sprite_old_y = 0;
-var main_sprite_max_jump_height = 20; 
+const main_sprite_max_jump_height = 20; 
 //preferences for the way the player deals with the collisions
-var main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
-var platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
+const main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
+const platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
 //array of keys we use for game and windows.keydown/up stores
 
 //the water pixel data
@@ -48,7 +48,7 @@ var keys =
 
 window.onkeydown = function(e) 
 {
-    var kc = e.keyCode;
+    let kc = e.keyCode;
     e.preventDefault();
     if      (kc === 65) keys.left = true;  // only one key per event
     else if (kc === 68) keys.right = true;
@@ -57,7 +57,7 @@ window.onkeydown = function(e)
 
 window.onkeyup = function(e) 
 {
-    var kc = e.keyCode;
+    let kc = e.keyCode;
     e.preventDefault();
     if      (kc === 65) keys.left = false;  // only one key per event
     else if (kc === 68) keys.right = false;
@@ -79,7 +79,7 @@ function _start()
     treat.create();
 
     //render water last with transparency
-    for (var i = 0; i < game_area.canvas.width; i++)
+    for (let i = 0; i < game_area.canvas.width; i++)
         water_create(i);
     //loop through the main game update loop
     requestAnimationFrame(game_area_update);
@@ -126,10 +126,12 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, bound_check)
         ctx = game_area.context;
         //16 colours, 2 cols per byte (4 bits each)
         //bit shift 4 (* 16) which will get 0-255
-        var c = 0;
-        for (var i = 0; i < pix_size; i++) {
-            var first_col = (pix[i] >> 4);
-            var second_col = (pix[i] & 0x0F);
+        let c = 0;
+        for (let i = 0; i < pix_size; i++) {
+            //XXXX YYYY = 0000 XXXX
+            let first_col = pix[i] >> 4;
+            //XXXX YYYY & 0000 FFFF = 0000 YYYY
+            let second_col = pix[i] & 0x0F;
             //parse under base 16 hex
             this.image_data.data[c + 0] = parseInt(cga_palette[(first_col * 3)], 16); //r
             this.image_data.data[c + 1] = parseInt(cga_palette[(first_col * 3) + 1], 16); //g
@@ -176,15 +178,15 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, bound_check)
 
     this.collision = function (other)
     {
-        var left = this.x;
-        var right = this.x + this.width;
-        var top = this.y;
-        var bottom = this.y + this.height;
-        var other_left = other.x;
-        var other_right = other.x + other.width;
-        var other_top = other.y;
-        var other_bottom = other.y + other.height;
-        var collide = true;
+        let left = this.x;
+        let right = this.x + this.width;
+        let top = this.y;
+        let bottom = this.y + this.height;
+        let other_left = other.x;
+        let other_right = other.x + other.width;
+        let other_top = other.y;
+        let other_bottom = other.y + other.height;
+        let collide = true;
         if ((bottom < other_top) || (top > other_bottom) || (right < other_left) || (left > other_right))
             collide = false;
         return collide;
@@ -214,14 +216,14 @@ function treat_reset_check(treat)
 
 function water_create(index)
 {
-    var c = 0;
-    var ctx = game_area.context;
+    let c = 0;
+    let ctx = game_area.context;
     //do the x one frame at a time 
     water_data[index] = ctx.createImageData(1, 50);
     //flip the y to bring the waves to the top 
-    for (var y = 50; y > 0; y--) {
+    for (let y = 50; y > 0; y--) {
         //the sine wave
-        var y_sine_offset = (4 * Math.sin(0.125 * index));
+        let y_sine_offset = (4 * Math.sin(0.125 * index));
         //dont render out any pixels if we are higher than the peak
         if (y > y_sine_offset) {
             //parse under base 16 hex
@@ -230,6 +232,7 @@ function water_create(index)
             water_data[index].data[c + 2] = parseInt(cga_palette[(9 * 3) + 2], 16); //b
             water_data[index].data[c + 3] = 255; //a
         }
+
         c += 4;
     }
 }
@@ -237,9 +240,9 @@ function water_create(index)
 //This renders out the water data sprite we generated in water_create
 function water_update(index)
 {
-    var ctx = game_area.context;
-    for (var y = 50; y > 0; y--) {
-        var y_sine_offset = (4 * Math.sin(0.125 * index));
+    let ctx = game_area.context;
+    for (let y = 50; y > 0; y--) {
+        let y_sine_offset = (4 * Math.sin(0.125 * index));
         ctx.putImageData(water_data[index], index, y_sine_offset + (game_area.canvas.height - 32));
     }
 }
@@ -302,7 +305,7 @@ function game_area_update()
         main_sprite.in_water = true;
 
     //this flag disables if we are falling which also disables double jumping which is good.
-    var can_jump = true;
+    let can_jump = true;
     //log the current y
     //we are falling
     if (main_sprite.y > main_sprite_old_y)
@@ -344,16 +347,16 @@ function game_area_update()
 
     //clear canvas
     game_area.clear();
-    //update and render sprite
-    main_sprite.update();
     //update render platform
     platform.update();
     platform2.update();
     //treat related code, reset_check before update, we alter the speedy
     treat_reset_check(treat);
     treat.update();
+    //update and render sprite
+    main_sprite.update();
     //render water last with transparency
-    for (var i = 0; i < game_area.canvas.width; i++)
+    for (let i = 0; i < game_area.canvas.width; i++)
         water_update(i);
     requestAnimationFrame(game_area_update);
 }
