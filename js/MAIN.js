@@ -26,6 +26,8 @@ var main_sprite;
 var platform;
 //bool for tracking player_jump
 var player_jump = false;
+//slow the player down when you fall into the water
+var player_in_water = false;
 //for tracking original jump position
 var main_sprite_jump_y = 0;
 //for testing against new y (used in conjunction with the jumping)
@@ -67,29 +69,27 @@ function _start()
     main_sprite = new sprite(16, 16, PLAYER_buffer, PLAYER_buffer_size, 20, 10, true);
     platform = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20, 37, false);
     platform2 = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 80, 160, false);
+    //loop through the main game update loop
+    requestAnimationFrame(game_area_update);
 }
 
 //start by making the game screen area on the HTML page
 var game_area =
 {
     canvas: document.createElement("canvas"),
-    start : function()
-    {
+    start: function () {
         this.canvas.width = 320;
         this.canvas.height = 200;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas,
             document.body.childNodes[0]);
-        //call game area update every 20ms (50 fps)
-        this.interval = setInterval(game_area_update, 20);
     },
 
     //clear the canvas (like glClear)
-    clear: function()
-    {
+    clear: function () {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
-}
+};
 
 //adds a component to the game area canvas we are working on
 function sprite(width, height, pix, pix_size, x, y, use_grav)
@@ -109,10 +109,10 @@ function sprite(width, height, pix, pix_size, x, y, use_grav)
             //if the sprite isn't affect by gravity, dont apply it
             if (this.gravity_use) {
                 //fall at normal gravity rate if not in water
-                if (!this.in_water)
-                    this.speedy = 1.5//this.gravity_speed += this.gravity;
+                if (!player_in_water)
+                    this.speedy = 2//this.gravity_speed += this.gravity;
                 else //fall at reduced speed during water
-                    this.speedy = 0.5;
+                    this.speedy = 0.35;
             }
         }
 
@@ -187,18 +187,17 @@ function water_update(index)
     for (var y = 50; y > 0; y--)
     {
         //the sine wave
-        var y_sine_offset = (4 * Math.sin((1 / 8) * index));
+        var y_sine_offset = (4 * Math.sin(0.125 * index));
         //dont render out any pixels if we are higher than the peak
         if (y > y_sine_offset) {
-            water_data.data[c] = cga_palette[(9 * 3)];
-            water_data.data[c + 1] = cga_palette[(9 * 3) + 1];
-            water_data.data[c + 2] = cga_palette[(9 * 3) + 2];
-            water_data.data[c + 3] = 64;
+            water_data.data[c] = cga_palette[(9 * 3)]; //r
+            water_data.data[c + 1] = cga_palette[(9 * 3) + 1]; //g
+            water_data.data[c + 2] = cga_palette[(9 * 3) + 2]; //b
+            water_data.data[c + 3] = 255; //a
         }
 
         c += 4;
-        var y_sine_int = parseInt(y_sine_offset);
-        ctx.putImageData(water_data, index, y_sine_int + (game_area.canvas.height - 32));
+        ctx.putImageData(water_data, index, y_sine_offset + (game_area.canvas.height - 32));
     }
 }
 
@@ -251,6 +250,12 @@ function game_area_update()
         main_sprite.speedx = 1;
     }
 
+    //player in water y test
+    if (main_sprite.y <= (game_area.canvas.height - 50))
+        player_in_water = false;
+    else if (main_sprite.y > (game_area.canvas.height - 50))
+        player_in_water = true;
+
     //this flag disables if we are falling which also disables double jumping which is good.
     var can_jump = true;
     //log the current y
@@ -274,14 +279,16 @@ function game_area_update()
     {
         //if we hit the top boundary without bringing gravity back, we're stuck at pixel 0 
         //because it manipulates y and not speedy
-        if (main_sprite.y <= 0)
-        {
+        if (main_sprite.y <= 0){
             main_sprite.gravity_use = true;
             player_jump = false;
         }
 
         //move the player up till the maximum jump height is achieved, then reintroduce gravity and make us fall.
-        main_sprite.speedy = -1;
+        if (!player_in_water)
+            main_sprite.speedy = -1;
+        else
+            main_sprite.speedy = -0.35;
         if (main_sprite.y < (main_sprite_jump_y - main_sprite_max_jump_height)){
             main_sprite.speedy = 0;
             player_jump = false;
@@ -291,12 +298,13 @@ function game_area_update()
 
     //clear canvas
     game_area.clear();
-    //render water last with transparency
-    for (var i = 0; i < game_area.canvas.width; i++)
-        water_update(i);
     //update and render sprite
     main_sprite.update();
     //update render platform
     platform.update();
     platform2.update();
+    //render water last with transparency
+    for (var i = 0; i < game_area.canvas.width; i++)
+        water_update(i);
+    requestAnimationFrame(game_area_update);
 }
