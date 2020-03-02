@@ -37,6 +37,10 @@ var main_sprite_max_jump_height = 20;
 var main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
 var platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
 //array of keys we use for game and windows.keydown/up stores
+
+//the water pixel data
+var water_data = [];
+
 var keys = 
 {
     space: false,
@@ -66,9 +70,17 @@ window.onkeyup = function(e)
 function _start()
 {
     game_area.start();
+    //loading in the assets
     main_sprite = new sprite(16, 16, PLAYER_buffer, PLAYER_buffer_size, 20, 10, true);
+    main_sprite.create();
     platform = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20, 37, false);
+    platform.create();
     platform2 = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 80, 160, false);
+    platform2.create();
+
+    //render water last with transparency
+    for (var i = 0; i < game_area.canvas.width; i++)
+        water_create(i);
     //loop through the main game update loop
     requestAnimationFrame(game_area_update);
 }
@@ -101,7 +113,33 @@ function sprite(width, height, pix, pix_size, x, y, use_grav)
     this.speedx = 0;
     this.speedy = 0;
     this.gravity_use = use_grav;
+    this.image_data = game_area.context.createImageData(this.width, this.height);
    
+    //creates the sprite and parses the pixels from the 
+    //palette indexed by the included sprite JS files
+    //created with BIN_TO_JS
+    this.create = function()
+    {
+        ctx = game_area.context;
+        //16 colours, 2 cols per byte (4 bits each)
+        //bit shift 4 (* 16) which will get 0-255
+        var c = 0;
+        for (var i = 0; i < pix_size; i++) {
+            var first_col = (pix[i] >> 4);
+            var second_col = (pix[i] & 0x0F);
+            //parse under base 16 hex
+            this.image_data.data[c + 0] = parseInt(cga_palette[(first_col * 3)], 16); //r
+            this.image_data.data[c + 1] = parseInt(cga_palette[(first_col * 3) + 1], 16); //g
+            this.image_data.data[c + 2] = parseInt(cga_palette[(first_col * 3) + 2], 16); //b
+            this.image_data.data[c + 3] = 255; //a
+            this.image_data.data[c + 4] = parseInt(cga_palette[(second_col * 3)], 16); //r
+            this.image_data.data[c + 5] = parseInt(cga_palette[(second_col * 3) + 1], 16); //g
+            this.image_data.data[c + 6] = parseInt(cga_palette[(second_col * 3) + 2], 16); //b
+            this.image_data.data[c + 7] = 255; //a
+            c += 8;
+        }
+    }
+
     this.new_pos = function ()
     {
         //if we collide with the platform, stop the player from falling through
@@ -152,52 +190,40 @@ function sprite(width, height, pix, pix_size, x, y, use_grav)
         //append the speed velocity x & y onto the position of the component
         //check against general bounding boxes of other components in the scene
         this.new_pos();
-
         ctx = game_area.context;
-        var image_data = ctx.createImageData(this.width, this.height);
-        //16 colours, 2 cols per byte (4 bits each)
-        //bit shift 4 (* 16) which will get 0-255
-        var c = 0;
-        for (var i = 0; i < pix_size; i++)
-        {
-            var first_col = (pix[i] >> 4);
-            var second_col = (pix[i] & 0x0F);
-            image_data.data[c+0] = cga_palette[(first_col*3)]; //r
-            image_data.data[c+1] = cga_palette[(first_col*3)+1]; //g
-            image_data.data[c+2] = cga_palette[(first_col*3)+2]; //b
-            image_data.data[c+3] = 255; //a
-            image_data.data[c+4] = cga_palette[(second_col*3)]; //r
-            image_data.data[c+5] = cga_palette[(second_col*3)+1]; //g
-            image_data.data[c+6] = cga_palette[(second_col*3)+2]; //b
-            image_data.data[c+7] = 255; //a
-            c+=8;
-        }
-
-        ctx.putImageData(image_data, this.x, this.y);
+        ctx.putImageData(this.image_data, this.x, this.y);
     }
 }
 
-function water_update(index)
+function water_create(index)
 {
     var c = 0;
     var ctx = game_area.context;
     //do the x one frame at a time 
-    var water_data = ctx.createImageData(1, 50);
+    water_data[index] = ctx.createImageData(1, 50);
     //flip the y to bring the waves to the top 
-    for (var y = 50; y > 0; y--)
-    {
+    for (var y = 50; y > 0; y--) {
         //the sine wave
         var y_sine_offset = (4 * Math.sin(0.125 * index));
         //dont render out any pixels if we are higher than the peak
         if (y > y_sine_offset) {
-            water_data.data[c] = cga_palette[(9 * 3)]; //r
-            water_data.data[c + 1] = cga_palette[(9 * 3) + 1]; //g
-            water_data.data[c + 2] = cga_palette[(9 * 3) + 2]; //b
-            water_data.data[c + 3] = 255; //a
+            //parse under base 16 hex
+            water_data[index].data[c] = parseInt(cga_palette[(9 * 3)], 16); //r
+            water_data[index].data[c + 1] = parseInt(cga_palette[(9 * 3) + 1], 16); //g
+            water_data[index].data[c + 2] = parseInt(cga_palette[(9 * 3) + 2], 16); //b
+            water_data[index].data[c + 3] = 255; //a
         }
-
         c += 4;
-        ctx.putImageData(water_data, index, y_sine_offset + (game_area.canvas.height - 32));
+    }
+}
+
+//This renders out the water data sprite we generated in water_create
+function water_update(index)
+{
+    var ctx = game_area.context;
+    for (var y = 50; y > 0; y--) {
+        var y_sine_offset = (4 * Math.sin(0.125 * index));
+        ctx.putImageData(water_data[index], index, y_sine_offset + (game_area.canvas.height - 32));
     }
 }
 
@@ -210,6 +236,8 @@ function player_move_zero()
 
 function player_left_collision(other)
 {
+    //if we come from the left, stop us going into the object
+    //other.y + 1 just add more of a bigger boundary for the player to hit
      if ((main_sprite.x - other.width) > other.x && main_sprite.x < ((other.x + other.width) + platform_width_offset) &&
         ((main_sprite.y + main_sprite_y_offset) > (other.y + 1) &&
             (main_sprite.y - main_sprite_y_offset) < ((other.y + other.height))))
@@ -218,7 +246,7 @@ function player_left_collision(other)
 
 function player_right_collision(other)
 {
-    //if we come from the left, stop us going into the object
+    //if we come from the right, stop us going into the object
     if ((main_sprite.x + main_sprite.width) < other.x && (main_sprite.x + main_sprite.width) > (other.x - platform_width_offset) &&
         ((main_sprite.y + main_sprite_y_offset) > (other.y + 1) &&
             (main_sprite.y - main_sprite_y_offset) < ((other.y + other.height))))
