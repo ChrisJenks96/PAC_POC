@@ -23,7 +23,8 @@ const cga_palette =
 ];
 
 var main_sprite;
-var platform;
+//arr of platforms
+var platform = [];
 //bool for tracking player_jump
 var player_jump = false;
 //for tracking original jump position
@@ -35,6 +36,8 @@ const main_sprite_max_jump_height = 20;
 const main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
 const platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
 //array of keys we use for game and windows.keydown/up stores
+
+const num_platforms = 10;
 
 //the water pixel data
 var water_data = [];
@@ -69,13 +72,16 @@ function _start()
 {
     game_area.start();
     //loading in the assets
-    main_sprite = new sprite(16, 16, DOG_buffer, DOG_buffer_size, 20, 10, true, true);
+    main_sprite = new sprite(16, 16, DOG_buffer, DOG_buffer_size, 20, 10, true, 2, true);
     main_sprite.create();
-    platform = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20, 37, false, false);
-    platform.create();
-    platform2 = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 80, 160, false, false);
-    platform2.create();
-    treat = new sprite(16, 16, TREAT_buffer, TREAT_buffer_size, 160, 0, true, false);
+    for (let i = 0; i < num_platforms; i++){
+        //between 20 and 180
+        let rand_y_pos = Math.random() * 100;
+        platform[i] = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 15 + (i * 30), 40 + rand_y_pos, false, 0, false);
+        platform[i].create();
+    }
+
+    treat = new sprite(16, 16, TREAT_buffer, TREAT_buffer_size, 160, 0, true, 1, false);
     treat.create();
 
     //render water last with transparency
@@ -104,7 +110,7 @@ var game_area =
 };
 
 //adds a component to the game area canvas we are working on
-function sprite(width, height, pix, pix_size, x, y, use_grav, bound_check)
+function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_check)
 {
     this.width = width;
     this.height = height;
@@ -113,6 +119,7 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, bound_check)
     this.speedx = 0;
     this.speedy = 0;
     this.gravity_use = use_grav;
+    this.gravity_value = grav_value;
     this.image_data = game_area.context.createImageData(this.width, this.height);
     //if we want to do the screen bound check, enable this
     this.bound_check = bound_check;
@@ -148,16 +155,16 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, bound_check)
     this.new_pos = function ()
     {
         //if we collide with the platform, stop the player from falling through
-        if (!this.collision(platform) && !this.collision(platform2)) {
+        //if (!this.collision(platform[0])) {
             //if the sprite isn't affect by gravity, dont apply it
             if (this.gravity_use) {
                 //fall at normal gravity rate if not in water
                 if (!this.in_water)
-                    this.speedy = 2//this.gravity_speed += this.gravity;
+                    this.speedy = this.gravity_value;//this.gravity_speed += this.gravity;
                 else //fall at reduced speed during water
                     this.speedy = 0.35;
             }
-        }
+        //}
 
         this.x += this.speedx;
         this.y += this.speedy;
@@ -273,18 +280,37 @@ function player_right_collision(other)
                 main_sprite.x = (other.x - main_sprite.width) - platform_width_offset;
 }
 
+//|
+//_
+
+function player_down_collision(other)
+{
+    if ((main_sprite.y + main_sprite.height) >= other.y)// && (main_sprite.x + main_sprite.width) > other.x &&
+       // (main_sprite.x + main_sprite.width) < (other.x - platform_width_offset))
+            main_sprite.y = (other.y - main_sprite.height) - platform_width_offset;
+}
+
 function game_area_update()
 {
+    //if we're falling under gravity
+    if (main_sprite.speedy == 2)
+    {
+        //for (let i = 0; i < num_platforms; i++){
+            player_down_collision(platform[0]);
+        //}
+    }
+
     //move the player sprite
     player_move_zero();
-    
+
     //more specific collision check for when we are falling off the platform, the collision will be true but 
     //we can still move inside the platform which we don't want.
     //left key
     if (keys.left)
     {
-        player_left_collision(platform);
-        player_left_collision(platform2);
+        for (let i = 0; i < num_platforms; i++){
+            player_left_collision(platform[i]);
+        }
         //speed scalar direction for moving the player left
         main_sprite.speedx = -1;
     }
@@ -292,8 +318,9 @@ function game_area_update()
     //right key
     if (keys.right)
     {
-        player_right_collision(platform);
-        player_right_collision(platform2);
+        for (let i = 0; i < num_platforms; i++){
+            player_right_collision(platform[i]);
+        }
         //speed scalar direction for moving the player right
         main_sprite.speedx = 1;
     }
@@ -348,8 +375,8 @@ function game_area_update()
     //clear canvas
     game_area.clear();
     //update render platform
-    platform.update();
-    platform2.update();
+    for (let i = 0; i < num_platforms; i++)
+        platform[i].update();
     //treat related code, reset_check before update, we alter the speedy
     treat_reset_check(treat);
     treat.update();
