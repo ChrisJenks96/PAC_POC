@@ -2,7 +2,7 @@
 //dark grey, light blue, light green, light cyan, light red,
 //light magenta, yellow, white
 //this is an array of RGB values for CGA palette above
-var vga_palette =
+var cga_palette =
 [
     0x00, 0x00, 0x00, //black 0
     0x00, 0x00, 0xA8, //blue 1
@@ -30,7 +30,7 @@ var player_jump = false;
 var main_sprite_jump_y = 0;
 //for testing against new y (used in conjunction with the jumping)
 var main_sprite_old_y = 0;
-var main_sprite_max_jump_height = 50; 
+var main_sprite_max_jump_height = 20; 
 //preferences for the way the player deals with the collisions
 var main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
 var platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
@@ -100,7 +100,6 @@ function sprite(width, height, pix, pix_size, x, y, use_grav)
     this.y = y;
     this.speedx = 0;
     this.speedy = 0;
-    this.gravity = 0.05
     this.gravity_use = use_grav;
    
     this.new_pos = function ()
@@ -108,8 +107,13 @@ function sprite(width, height, pix, pix_size, x, y, use_grav)
         //if we collide with the platform, stop the player from falling through
         if (!this.collision(platform) && !this.collision(platform2)) {
             //if the sprite isn't affect by gravity, dont apply it
-            if (this.gravity_use)
-                this.speedy = 1;//this.gravity_speed += this.gravity;
+            if (this.gravity_use) {
+                //fall at normal gravity rate if not in water
+                if (!this.in_water)
+                    this.speedy = 1.5//this.gravity_speed += this.gravity;
+                else //fall at reduced speed during water
+                    this.speedy = 0.5;
+            }
         }
 
         this.x += this.speedx;
@@ -158,13 +162,13 @@ function sprite(width, height, pix, pix_size, x, y, use_grav)
         {
             var first_col = (pix[i] >> 4);
             var second_col = (pix[i] & 0x0F);
-            image_data.data[c+0] = vga_palette[(first_col*3)]; //r
-            image_data.data[c+1] = vga_palette[(first_col*3)+1]; //g
-            image_data.data[c+2] = vga_palette[(first_col*3)+2]; //b
+            image_data.data[c+0] = cga_palette[(first_col*3)]; //r
+            image_data.data[c+1] = cga_palette[(first_col*3)+1]; //g
+            image_data.data[c+2] = cga_palette[(first_col*3)+2]; //b
             image_data.data[c+3] = 255; //a
-            image_data.data[c+4] = vga_palette[(second_col*3)]; //r
-            image_data.data[c+5] = vga_palette[(second_col*3)+1]; //g
-            image_data.data[c+6] = vga_palette[(second_col*3)+2]; //b
+            image_data.data[c+4] = cga_palette[(second_col*3)]; //r
+            image_data.data[c+5] = cga_palette[(second_col*3)+1]; //g
+            image_data.data[c+6] = cga_palette[(second_col*3)+2]; //b
             image_data.data[c+7] = 255; //a
             c+=8;
         }
@@ -173,6 +177,32 @@ function sprite(width, height, pix, pix_size, x, y, use_grav)
     }
 }
 
+function water_update(index)
+{
+    var c = 0;
+    var ctx = game_area.context;
+    //do the x one frame at a time 
+    var water_data = ctx.createImageData(1, 50);
+    //flip the y to bring the waves to the top 
+    for (var y = 50; y > 0; y--)
+    {
+        //the sine wave
+        var y_sine_offset = (4 * Math.sin((1 / 8) * index));
+        //dont render out any pixels if we are higher than the peak
+        if (y > y_sine_offset) {
+            water_data.data[c] = cga_palette[(9 * 3)];
+            water_data.data[c + 1] = cga_palette[(9 * 3) + 1];
+            water_data.data[c + 2] = cga_palette[(9 * 3) + 2];
+            water_data.data[c + 3] = 64;
+        }
+
+        c += 4;
+        var y_sine_int = parseInt(y_sine_offset);
+        ctx.putImageData(water_data, index, y_sine_int + (game_area.canvas.height - 32));
+    }
+}
+
+//reset the velocity vectors
 function player_move_zero()
 {
     main_sprite.speedx = 0;
@@ -221,8 +251,6 @@ function game_area_update()
         main_sprite.speedx = 1;
     }
 
-
-   
     //this flag disables if we are falling which also disables double jumping which is good.
     var can_jump = true;
     //log the current y
@@ -263,6 +291,9 @@ function game_area_update()
 
     //clear canvas
     game_area.clear();
+    //render water last with transparency
+    for (var i = 0; i < game_area.canvas.width; i++)
+        water_update(i);
     //update and render sprite
     main_sprite.update();
     //update render platform
