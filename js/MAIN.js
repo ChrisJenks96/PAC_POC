@@ -77,7 +77,7 @@ function _start()
     for (let i = 0; i < num_platforms; i++){
         //between 20 and 180
         let rand_y_pos = Math.random() * 100;
-        platform[i] = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 15 + (i * 30), 40 + rand_y_pos, false, 0, false);
+        platform[i] = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20 + (i * 25), 40 + rand_y_pos, false, 0, false);
         platform[i].create();
     }
 
@@ -154,17 +154,14 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_
 
     this.new_pos = function ()
     {
-        //if we collide with the platform, stop the player from falling through
-        //if (!this.collision(platform[0])) {
-            //if the sprite isn't affect by gravity, dont apply it
-            if (this.gravity_use) {
-                //fall at normal gravity rate if not in water
-                if (!this.in_water)
-                    this.speedy = this.gravity_value;//this.gravity_speed += this.gravity;
-                else //fall at reduced speed during water
-                    this.speedy = 0.35;
-            }
-        //}
+        //if the sprite isn't affect by gravity, dont apply it
+        if (this.gravity_use) {
+            //fall at normal gravity rate if not in water
+            if (!this.in_water)
+                this.speedy = this.gravity_value;//this.gravity_speed += this.gravity;
+            else //fall at reduced speed during water
+                this.speedy = 0.35;
+        }
 
         this.x += this.speedx;
         this.y += this.speedy;
@@ -181,22 +178,6 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_
             if (this.y < 0)
                 this.y = 0;
         }
-    }
-
-    this.collision = function (other)
-    {
-        let left = this.x;
-        let right = this.x + this.width;
-        let top = this.y;
-        let bottom = this.y + this.height;
-        let other_left = other.x;
-        let other_right = other.x + other.width;
-        let other_top = other.y;
-        let other_bottom = other.y + other.height;
-        let collide = true;
-        if ((bottom < other_top) || (top > other_bottom) || (right < other_left) || (left > other_right))
-            collide = false;
-        return collide;
     }
 
     //this is to be called every frame to update component 
@@ -268,38 +249,36 @@ function player_left_collision(other)
      if ((main_sprite.x - other.width) > other.x && main_sprite.x < ((other.x + other.width) + platform_width_offset) &&
         ((main_sprite.y + main_sprite_y_offset) > (other.y + 1) &&
             (main_sprite.y - main_sprite_y_offset) < ((other.y + other.height))))
-                main_sprite.x = (other.x + other.width) + platform_width_offset;
+                main_sprite.x += 1;//(other.x + other.width) + platform_width_offset;
 }
 
 function player_right_collision(other)
 {
     //if we come from the right, stop us going into the object
     if ((main_sprite.x + main_sprite.width) < other.x && (main_sprite.x + main_sprite.width) > (other.x - platform_width_offset) &&
-        ((main_sprite.y + main_sprite_y_offset) > (other.y + 1) &&
+        ((main_sprite.y + main_sprite_y_offset) > (other.y) &&
             (main_sprite.y - main_sprite_y_offset) < ((other.y + other.height))))
-                main_sprite.x = (other.x - main_sprite.width) - platform_width_offset;
+                main_sprite.x -= 1;//(other.x - main_sprite.width) - platform_width_offset;
 }
-
-//|
-//_
 
 function player_down_collision(other)
 {
-    if ((main_sprite.y + main_sprite.height) >= other.y)// && (main_sprite.x + main_sprite.width) > other.x &&
-       // (main_sprite.x + main_sprite.width) < (other.x - platform_width_offset))
-            main_sprite.y = (other.y - main_sprite.height) - platform_width_offset;
+    if ((main_sprite.y + main_sprite.height) >= other.y && 
+        (main_sprite.x + main_sprite.width) > other.x && 
+            main_sprite.x < (other.x + other.width))
+                main_sprite.y -= 2;
+}
+
+function player_up_collision(other)
+{
+    if (main_sprite.y >= (other.y + other.height) && 
+        (main_sprite.x + main_sprite.width) > other.x && 
+            main_sprite.x < (other.x + other.width))
+                main_sprite.y += 2;
 }
 
 function game_area_update()
 {
-    //if we're falling under gravity
-    if (main_sprite.speedy == 2)
-    {
-        //for (let i = 0; i < num_platforms; i++){
-            player_down_collision(platform[0]);
-        //}
-    }
-
     //move the player sprite
     player_move_zero();
 
@@ -323,6 +302,11 @@ function game_area_update()
         }
         //speed scalar direction for moving the player right
         main_sprite.speedx = 1;
+    }
+
+    for (let i = 0; i < num_platforms; i++){
+        player_down_collision(platform[i]);
+        player_up_collision(platform[i]);
     }
 
     //player in water y test 
