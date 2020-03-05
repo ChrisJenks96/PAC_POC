@@ -10,8 +10,9 @@
 class input
 {
 	public:
-		input(){}
+		input(){quit = false;}
 		void update();
+		bool is_quit(){return quit;}
 		#ifdef _PSP
 			int isKeyDown(int key);
 			int isKeyUp(int key);
@@ -22,6 +23,7 @@ class input
 			SceCtrlData pad;
 			SceCtrlLatch latch;
 		#endif
+		bool quit;
 		SDL_Event e;
 };
 

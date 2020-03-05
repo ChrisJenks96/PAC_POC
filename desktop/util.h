@@ -12,16 +12,31 @@
 	#include <SDL/SDL_ttf.h>
 #endif
 
+static unsigned char cga_palette[] =
+{
+    0x00, 0x00, 0x00, //black 0
+    0x00, 0x00, 0xA8, //blue 1
+    0x00, 0xA8, 0x00, //green 2
+    0x00, 0xA8, 0xA8, //cyan 3
+    0xA8, 0x00, 0x00, //red 4
+    0xA8, 0xA8, 0x00, //magenta 5
+    0xA8, 0x54, 0x00, //brown 6
+    0xA8, 0xA8, 0xA8, //grey 7
+    0x54, 0x54, 0x54, //dark grey 8
+    0x54, 0x54, 0xFC, //light blue 9
+    0x54, 0xFC, 0x54, //light green 10
+    0x54, 0xFC, 0xFC, //light cyan 11
+    0xFC, 0x54, 0x54, //light red 12
+    0xFC, 0x54, 0xFC, //light magenta 13
+    0xFC, 0xFC, 0x54, //yellow 14
+    0xFC, 0xFC, 0xFC //white 15
+};
+
+
 static SDL_Surface* load_bmp(char* fn)
 {
 	SDL_Surface* s;
 	char buff[32];
-	#ifdef _WIN32
-		strcpy(&buff[0], "win/");
-	#elif _PSP
-		strcpy(&buff[0], "psp/");
-	#endif
-	strcpy(&buff[strlen(buff)], fn);
 	s = SDL_LoadBMP(buff);
 	if (!s)
 		return NULL;
@@ -93,6 +108,7 @@ static void putpixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
     }
 }
 
+//useful scaling of a surface, cannot do it in SDL 1.2 natively, so this function stretches the pixels
 static SDL_Surface* scale_surface(SDL_Surface *Surface, Uint16 Width, Uint16 Height)
 {
 	if (Surface->w == Width && Surface->h == Height)
@@ -130,6 +146,7 @@ static SDL_Surface* scale_surface(SDL_Surface *Surface, Uint16 Width, Uint16 Hei
 	}
 }
 
+//find a character in the string
 static int str_find(char* s, char c)
 {
 	int id = 0, k = 0;
@@ -142,6 +159,15 @@ static int str_find(char* s, char c)
 	}
 
 	return id;
+}
+
+static unsigned int cga_palette_to_rgba_uint(unsigned char col_id)
+{
+	unsigned char r, g, b;
+	r = cga_palette[col_id*3];
+	g = cga_palette[(col_id*3)+1];
+	b = cga_palette[(col_id*3)+2];
+	return (r << 24) | (g << 16) | (b << 8) | 255;
 }
 
 #endif

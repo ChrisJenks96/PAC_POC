@@ -48,8 +48,9 @@ class core
 		void pre_update();
 		void update();
 		void render();
+		SDL_Surface* get_screen(){return screen;}
 		float get_deltatime(){return deltatime;}
-		bool is_quit(){return quit;}
+		bool is_quit(){return in.is_quit();}
 		~core();
 	private:
 		int fps;
@@ -58,7 +59,6 @@ class core
 		input in;
 		SDL_Surface* screen;
 		int start_clock;
-		bool quit;
 };
 
 #endif

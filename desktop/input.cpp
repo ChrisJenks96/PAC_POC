@@ -8,7 +8,7 @@ void input::update()
 		switch (e.type)
 		{
 			case SDL_QUIT:
-				//quit = true;
+				quit = true;
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				{
