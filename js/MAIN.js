@@ -22,6 +22,20 @@ const cga_palette =
     0xFC, 0xFC, 0xFC //white 15
 ];
 
+//number of tiles in the scene
+const lvl_0_tile_size = 7;
+//the tiles xy position
+const lvl_0_tile_xy = 
+[
+    64, 110,
+    96, 125,
+    128, 130,
+    165, 140,
+    192, 135,
+    236, 140,
+    280, 155
+];
+
 var main_sprite;
 //arr of platforms
 var platform = [];
@@ -36,8 +50,6 @@ const main_sprite_max_jump_height = 20;
 const main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
 const platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
 //array of keys we use for game and windows.keydown/up stores
-
-const num_platforms = 10;
 
 //the water pixel data
 var water_data = [];
@@ -74,19 +86,28 @@ function _start()
     //loading in the assets
     main_sprite = new sprite(16, 16, DOG_buffer, DOG_buffer_size, 20, 10, true, 2, true);
     main_sprite.create();
-    for (let i = 0; i < num_platforms; i++){
-        //between 20 and 180
-        let rand_y_pos = Math.random() * 100;
-        platform[i] = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, 20 + (i * 25), 40 + rand_y_pos, false, 0, false);
+    //count for the lvl x tile xy
+    let c = 0;
+    for (let i = 0; i < lvl_0_tile_size; i++){
+        platform[i] = new sprite(16, 16, PLATFORM_buffer, PLATFORM_buffer_size, lvl_0_tile_xy[c] - 32, lvl_0_tile_xy[c+1] - 32, false, 0, false);
         platform[i].create();
+        c+=2;
     }
 
+    //the main baddies in the game, the nasty cats are out to ruin you
+    nasty_cat = new sprite(16, 16, NASTY_CAT_buffer, NASTY_CAT_buffer_size, 150, -10, false, 1, false);
+    nasty_cat.create();
+    //the main game collectables for the player to collect
     treat = new sprite(16, 16, TREAT_buffer, TREAT_buffer_size, 160, 0, true, 1, false);
     treat.create();
 
     //render water last with transparency
     for (let i = 0; i < game_area.canvas.width; i++)
         water_create(i);
+
+    //call the nasty cat player lock on method every 20ms
+    setInterval(nasty_cat_trajectory, 20);
+
     //loop through the main game update loop
     requestAnimationFrame(game_area_update);
 }
@@ -191,6 +212,63 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_
     }
 }
 
+//the sample directional vectors
+var old_dir_x = [];
+var old_dir_y = [];
+//final directional vector the cat will follow
+var dir_x;
+var dir_y;
+var cycle = 0;
+
+function nasty_cat_trajectory()
+{
+    //get 2 samples of the cat following the player
+    //from them two position, subtract to get directional vector
+    //then force the directional vector on the player, static but 
+    //means the nasty cat will have a general idea of where the player is
+    if (cycle < 2)
+    {
+        old_dir_x[cycle] = (main_sprite.x - nasty_cat.x);
+        old_dir_y[cycle] = (main_sprite.y - nasty_cat.y);
+        nasty_cat.x += old_dir_x[cycle] * -0.2;
+        nasty_cat.y += old_dir_y[cycle] * -0.2;
+        cycle++;
+    }
+
+    else if (cycle == 2)
+    {
+        //get the sample data and make our directional vector
+        dir_x = old_dir_x[1] - old_dir_x[0];
+        dir_y = old_dir_y[1] - old_dir_y[0];
+        //force it out of these two config statements
+        cycle = 3;
+    }
+
+    else if (cycle > 2)
+    {
+        nasty_cat.x += dir_x * 0.2;
+        nasty_cat.y += dir_y * 0.2;
+    }
+
+    //bounds checks, if the cat is out, reset it and do it again
+    let out_of_bounds = false;
+    if (nasty_cat.x > (320 + nasty_cat.width))
+        out_of_bounds = true;
+    if (nasty_cat.x < 0 - nasty_cat.width)
+        out_of_bounds = true;
+    if (nasty_cat.y > (200 + nasty_cat.height))
+        out_of_bounds = true;
+
+    if (out_of_bounds)
+    {
+        //reset position back, random x, we need the cat out of shot
+        nasty_cat.x = 150;
+        nasty_cat.y = -50;
+        //cycle 0 resets the sample data for direction
+        cycle = 0;
+    }
+}
+
 //a bounds check for the treats, they fall out of world, we bring them back (obj pooling)
 function treat_reset_check(treat)
 {
@@ -287,7 +365,7 @@ function game_area_update()
     //left key
     if (keys.left)
     {
-        for (let i = 0; i < num_platforms; i++){
+        for (let i = 0; i < lvl_0_tile_size; i++){
             player_left_collision(platform[i]);
         }
         //speed scalar direction for moving the player left
@@ -297,14 +375,14 @@ function game_area_update()
     //right key
     if (keys.right)
     {
-        for (let i = 0; i < num_platforms; i++){
+        for (let i = 0; i < lvl_0_tile_size; i++){
             player_right_collision(platform[i]);
         }
         //speed scalar direction for moving the player right
         main_sprite.speedx = 1;
     }
 
-    for (let i = 0; i < num_platforms; i++){
+    for (let i = 0; i < lvl_0_tile_size; i++){
         player_down_collision(platform[i]);
         player_up_collision(platform[i]);
     }
@@ -359,13 +437,14 @@ function game_area_update()
     //clear canvas
     game_area.clear();
     //update render platform
-    for (let i = 0; i < num_platforms; i++)
+    for (let i = 0; i < lvl_0_tile_size; i++)
         platform[i].update();
     //treat related code, reset_check before update, we alter the speedy
     treat_reset_check(treat);
     treat.update();
     //update and render sprite
     main_sprite.update();
+    nasty_cat.update();
     //render water last with transparency
     for (let i = 0; i < game_area.canvas.width; i++)
         water_update(i);
