@@ -94,9 +94,6 @@ function _start()
         c+=2;
     }
 
-    //the main baddies in the game, the nasty cats are out to ruin you
-    nasty_cat = new sprite(16, 16, NASTY_CAT_buffer, NASTY_CAT_buffer_size, 150, -10, false, 1, false);
-    nasty_cat.create();
     //the main game collectables for the player to collect
     treat = new sprite(16, 16, TREAT_buffer, TREAT_buffer_size, 160, 0, true, 1, false);
     treat.create();
@@ -105,8 +102,9 @@ function _start()
     for (let i = 0; i < game_area.canvas.width; i++)
         water_create(i);
 
+    main_nasty_cat = new nasty_cat();
     //call the nasty cat player lock on method every 20ms
-    setInterval(nasty_cat_trajectory, 20);
+    setInterval(main_nasty_cat_update_func, 20);
 
     //loop through the main game update loop
     requestAnimationFrame(game_area_update);
@@ -202,7 +200,7 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_
     }
 
     //this is to be called every frame to update component 
-    this.update = function ()
+    this.render = function ()
     {
         //append the speed velocity x & y onto the position of the component
         //check against general bounding boxes of other components in the scene
@@ -212,62 +210,80 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_
     }
 }
 
-//the sample directional vectors
-var old_dir_x = [];
-var old_dir_y = [];
-//final directional vector the cat will follow
-var dir_x;
-var dir_y;
-var cycle = 0;
-
-function nasty_cat_trajectory()
+//static function so we can call setInterval
+function main_nasty_cat_update_func()
 {
-    //get 2 samples of the cat following the player
-    //from them two position, subtract to get directional vector
-    //then force the directional vector on the player, static but 
-    //means the nasty cat will have a general idea of where the player is
-    if (cycle < 2)
-    {
-        old_dir_x[cycle] = (main_sprite.x - nasty_cat.x);
-        old_dir_y[cycle] = (main_sprite.y - nasty_cat.y);
-        nasty_cat.x += old_dir_x[cycle] * -0.2;
-        nasty_cat.y += old_dir_y[cycle] * -0.2;
-        cycle++;
-    }
-
-    else if (cycle == 2)
-    {
-        //get the sample data and make our directional vector
-        dir_x = old_dir_x[1] - old_dir_x[0];
-        dir_y = old_dir_y[1] - old_dir_y[0];
-        //force it out of these two config statements
-        cycle = 3;
-    }
-
-    else if (cycle > 2)
-    {
-        nasty_cat.x += dir_x * 0.2;
-        nasty_cat.y += dir_y * 0.2;
-    }
-
-    //bounds checks, if the cat is out, reset it and do it again
-    let out_of_bounds = false;
-    if (nasty_cat.x > (320 + nasty_cat.width))
-        out_of_bounds = true;
-    if (nasty_cat.x < 0 - nasty_cat.width)
-        out_of_bounds = true;
-    if (nasty_cat.y > (200 + nasty_cat.height))
-        out_of_bounds = true;
-
-    if (out_of_bounds)
-    {
-        //reset position back, random x, we need the cat out of shot
-        nasty_cat.x = 150;
-        nasty_cat.y = -50;
-        //cycle 0 resets the sample data for direction
-        cycle = 0;
-    }
+    main_nasty_cat.update();
 }
+
+//store all the nasty cat functionality in this structure
+function nasty_cat()
+{
+    //the sample directional vectors
+    this.old_dir_x = [];
+    this.old_dir_y = [];
+    //final directional vector the cat will follow
+    this.dir_x;
+    this.dir_y;
+    this.cycle = 0;
+    //the main baddies in the game, the nasty cats are out to ruin you
+    this.sprite = new sprite(16, 16, NASTY_CAT_buffer, NASTY_CAT_buffer_size, 150, -10, false, 1, false);
+    this.sprite.create();
+
+    this.render = function()
+    {
+        this.sprite.render();
+    }
+
+    this.update = function()
+    {
+        //get 2 samples of the cat following the player
+        //from them two position, subtract to get directional vector
+        //then force the directional vector on the player, static but 
+        //means the nasty cat will have a general idea of where the player is
+        if (this.cycle < 2)
+        {
+            this.old_dir_x[this.cycle] = (main_sprite.x - this.sprite.x);
+            this.old_dir_y[this.cycle] = (main_sprite.y - this.sprite.y);
+            this.sprite.x += this.old_dir_x[this.cycle] * -0.2;
+            this.sprite.y += this.old_dir_y[this.cycle] * -0.2;
+            this.cycle++;
+        }
+
+        else if (this.cycle == 2)
+        {
+            //get the sample data and make our directional vector
+            this.dir_x = this.old_dir_x[1] - this.old_dir_x[0];
+            this.dir_y = this.old_dir_y[1] - this.old_dir_y[0];
+            //force it out of these two config statements
+            this.cycle = 3;
+        }
+
+        else if (this.cycle > 2)
+        {
+            this.sprite.x += this.dir_x * 0.2;
+            this.sprite.y += this.dir_y * 0.2;
+        }
+
+        //bounds checks, if the cat is out, reset it and do it again
+        let out_of_bounds = false;
+        if (this.sprite.x > (320 + this.sprite.width))
+            out_of_bounds = true;
+        if (this.sprite.x < 0 - this.sprite.width)
+            out_of_bounds = true;
+        if (this.sprite.y > (200 + this.sprite.height))
+            out_of_bounds = true;
+
+        if (out_of_bounds)
+        {
+            //reset position back, random x, we need the cat out of shot
+            this.sprite.x = 150;
+            this.sprite.y = -50;
+            //cycle 0 resets the sample data for direction
+            this.cycle = 0;
+        }
+    }
+};
 
 //a bounds check for the treats, they fall out of world, we bring them back (obj pooling)
 function treat_reset_check(treat)
@@ -304,7 +320,7 @@ function water_create(index)
 }
 
 //This renders out the water data sprite we generated in water_create
-function water_update(index)
+function water_render(index)
 {
     let ctx = game_area.context;
     for (let y = 50; y > 0; y--) {
@@ -438,15 +454,16 @@ function game_area_update()
     game_area.clear();
     //update render platform
     for (let i = 0; i < lvl_0_tile_size; i++)
-        platform[i].update();
+        platform[i].render();
     //treat related code, reset_check before update, we alter the speedy
     treat_reset_check(treat);
-    treat.update();
+    treat.render();
     //update and render sprite
-    main_sprite.update();
-    nasty_cat.update();
+    main_sprite.render();
+    //main_nasty_cat.update();
+    main_nasty_cat.render();
     //render water last with transparency
     for (let i = 0; i < game_area.canvas.width; i++)
-        water_update(i);
+        water_render(i);
     requestAnimationFrame(game_area_update);
 }
