@@ -45,11 +45,16 @@ var player_jump = false;
 var main_sprite_jump_y = 0;
 //for testing against new y (used in conjunction with the jumping)
 var main_sprite_old_y = 0;
-const main_sprite_max_jump_height = 20; 
+const main_sprite_max_jump_height = 20;
 //preferences for the way the player deals with the collisions
 const main_sprite_y_offset = 8//main_sprite.width >> 2; //div by 2
 const platform_width_offset = 2; //extra space on the x for the platform for the player to fall off (game feature)
 //array of keys we use for game and windows.keydown/up stores
+
+//track how many treats you have acquired
+var treat_collects = 0;
+//track how many lives we have left
+var hearts_left = 3;
 
 //the water pixel data
 var water_data = [];
@@ -106,6 +111,15 @@ function _start()
     //call the nasty cat player lock on method every 20ms
     setInterval(main_nasty_cat_update_func, 20);
 
+    //used for fonts
+    game_area.context.font = "12px myFont";
+
+     //icons
+    treat_icon = new sprite(16, 16, TREAT_buffer, TREAT_buffer_size, 10, 9, false, 0, false);
+    treat_icon.create();
+    heart_icon = new sprite(16, 16, HEART_buffer, HEART_buffer_size, 270, 9, false, 0, false);
+    heart_icon.create();
+
     //loop through the main game update loop
     requestAnimationFrame(game_area_update);
 }
@@ -143,6 +157,26 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_
     //if we want to do the screen bound check, enable this
     this.bound_check = bound_check;
     this.in_water = false;
+    this.visible = true;
+
+    this.collision = function(other)
+    {
+        var myleft = this.x;
+        var myright = this.x + (this.width);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height);
+        var otherleft = other.x;
+        var otherright = other.x + (other.width);
+        var othertop = other.y;
+        var otherbottom = other.y + (other.height);
+        var collision = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) ||
+            (myright < otherleft) || (myleft > otherright)) {
+                collision = false;
+        }
+
+        return collision;
+    }
    
     //creates the sprite and parses the pixels from the 
     //palette indexed by the included sprite JS files
@@ -205,8 +239,11 @@ function sprite(width, height, pix, pix_size, x, y, use_grav, grav_value, bound_
         //append the speed velocity x & y onto the position of the component
         //check against general bounding boxes of other components in the scene
         this.new_pos();
-        ctx = game_area.context;
-        ctx.putImageData(this.image_data, this.x, this.y);
+        if (this.visible)
+        {
+            ctx = game_area.context;
+            ctx.putImageData(this.image_data, this.x, this.y);
+        }
     }
 }
 
@@ -266,7 +303,22 @@ function nasty_cat()
             this.sprite.y += this.dir_y * this.speed;
         }
 
-        //bounds checks, if the cat is out, reset it and do it again
+        this.bounds_check();
+    }
+
+    this.reset_pos = function()
+    {
+        //reset position back, random x, we need the cat out of shot
+        this.sprite.x = 150;
+        this.sprite.y = -50;
+        //cycle 0 resets the sample data for direction
+        this.cycle = 0;
+        this.sprite.visible = true;
+    }
+
+    this.bounds_check = function()
+    {
+         //bounds checks, if the cat is out, reset it and do it again
         let out_of_bounds = false;
         if (this.sprite.x > (320 + this.sprite.width))
             out_of_bounds = true;
@@ -276,13 +328,7 @@ function nasty_cat()
             out_of_bounds = true;
 
         if (out_of_bounds)
-        {
-            //reset position back, random x, we need the cat out of shot
-            this.sprite.x = 150;
-            this.sprite.y = -50;
-            //cycle 0 resets the sample data for direction
-            this.cycle = 0;
-        }
+            this.reset_pos();
     }
 };
 
@@ -310,9 +356,9 @@ function water_create(index)
         //dont render out any pixels if we are higher than the peak
         if (y > y_sine_offset) {
             //parse under base 16 hex
-            water_data[index].data[c] = parseInt(cga_palette[(9 * 3)], 16); //r
-            water_data[index].data[c + 1] = parseInt(cga_palette[(9 * 3) + 1], 16); //g
-            water_data[index].data[c + 2] = parseInt(cga_palette[(9 * 3) + 2], 16); //b
+            water_data[index].data[c] = parseInt(cga_palette[(1 * 3)], 16); //r
+            water_data[index].data[c + 1] = parseInt(cga_palette[(1 * 3) + 1], 16); //g
+            water_data[index].data[c + 2] = parseInt(cga_palette[(1 * 3) + 2], 16); //b
             water_data[index].data[c + 3] = 255; //a
         }
 
@@ -449,7 +495,31 @@ function game_area_update()
             player_jump = false;
             main_sprite.gravity_use = true;
         }
-    }   
+    }  
+
+    //do collision checks on the player against the treats
+    if (main_sprite.collision(treat))
+    {
+        //if the treat is visible, add it to our conut
+        if (treat.visible)
+        {
+            treat_collects+=1;
+            treat.visible = false;
+        }
+    }
+
+    //do collision check on player against the main enemy
+    if (main_sprite.collision(main_nasty_cat.sprite))
+    {
+        //remove a life if we get hit
+        if (main_nasty_cat.sprite.visible)
+        {
+            if (hearts_left > 0)
+                hearts_left-=1;
+            main_nasty_cat.sprite.visible = false;
+            main_nasty_cat.reset_pos();
+        }
+    }
 
     //clear canvas
     game_area.clear();
@@ -466,5 +536,14 @@ function game_area_update()
     //render water last with transparency
     for (let i = 0; i < game_area.canvas.width; i++)
         water_render(i);
+
+    //text and icons render
+    game_area.context.fillStyle = "#FFCC00";
+    game_area.context.fillText("X " + treat_collects, 30, 20); 
+    treat_icon.render();
+    game_area.context.fillStyle = "#FF0000";
+    game_area.context.fillText("X " + hearts_left, 290, 20); 
+    heart_icon.render();
+
     requestAnimationFrame(game_area_update);
 }
