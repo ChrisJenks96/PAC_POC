@@ -226,6 +226,7 @@ function nasty_cat()
     this.dir_x;
     this.dir_y;
     this.cycle = 0;
+    this.speed = 0.125;
     //the main baddies in the game, the nasty cats are out to ruin you
     this.sprite = new sprite(16, 16, NASTY_CAT_buffer, NASTY_CAT_buffer_size, 150, -10, false, 1, false);
     this.sprite.create();
@@ -245,8 +246,8 @@ function nasty_cat()
         {
             this.old_dir_x[this.cycle] = (main_sprite.x - this.sprite.x);
             this.old_dir_y[this.cycle] = (main_sprite.y - this.sprite.y);
-            this.sprite.x += this.old_dir_x[this.cycle] * -0.2;
-            this.sprite.y += this.old_dir_y[this.cycle] * -0.2;
+            this.sprite.x += this.old_dir_x[this.cycle] * -this.speed;
+            this.sprite.y += this.old_dir_y[this.cycle] * -this.speed;
             this.cycle++;
         }
 
@@ -261,8 +262,8 @@ function nasty_cat()
 
         else if (this.cycle > 2)
         {
-            this.sprite.x += this.dir_x * 0.2;
-            this.sprite.y += this.dir_y * 0.2;
+            this.sprite.x += this.dir_x * this.speed;
+            this.sprite.y += this.dir_y * this.speed;
         }
 
         //bounds checks, if the cat is out, reset it and do it again
