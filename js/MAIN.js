@@ -97,8 +97,7 @@ function _start()
     treat.create();
 
     //render water last with transparency
-    for (let i = 0; i < game_area.canvas.width; i++)
-        water_create(i);
+    water_create();
 
     main_nasty_cat = new nasty_cat();
     //call the nasty cat player lock on method every 20ms
@@ -260,8 +259,7 @@ function game_area_update()
     //main_nasty_cat.update();
     main_nasty_cat.render();
     //render water last with transparency
-    //for (let i = 0; i < game_area.canvas.width; i++)
-      //  water_render(i);
+    water_render();
 
     //text and icons render
     game_area.context.fillStyle = "#FFCC00";
