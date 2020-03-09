@@ -36,6 +36,21 @@ const lvl_0_tile_xy =
     280, 155
 ];
 
+var lvl_0_tile_inc_count = 0;
+//next platform set (8 bits total, 1 bit per platform)
+//0 = -8px
+//1 = 8px
+
+function hex2bin(hex){
+    return ("00000000" + (parseInt(hex, 16)).toString(2)).substr(-8);
+}
+
+const lvl_0_tile_inc = 
+[
+    //only 7 platforms, hence the pattern
+    '0000010'
+];
+
 var main_sprite;
 //arr of platforms
 var platform = [];
@@ -46,6 +61,10 @@ var main_sprite_jump_y = 0;
 //for testing against new y (used in conjunction with the jumping)
 var main_sprite_old_y = 0;
 const main_sprite_max_jump_height = 20;
+
+let platform_update_count = 1;
+const platform_update_treat_num = 1;
+let platform_update_flag = false;
 
 //track how many treats you have acquired
 var treat_collects = 0;
@@ -77,6 +96,31 @@ window.onkeyup = function(e)
     else if (kc === 32) keys.space = false;
 };
 
+function platform_update()
+{
+    if ((treat_collects % platform_update_treat_num) == 0)
+    {
+        if (!platform_update_flag)
+        {
+            platform_update_count = 1;
+            //count will act as the variable to bitwise AND off
+            //times count by 2 e.g. 0000 0001 -> 0000 0010
+            for (let i = 0; i < lvl_0_tile_size; i++)
+            {
+                let step = lvl_0_tile_inc[lvl_0_tile_inc_count];
+                //if the bit value is 1, move up by 8 ,equal to 0, move down by 8
+                step = step[i] == 1 ? 16 : 0;
+                platform[i].y += step;
+                platform_update_count *= 2;
+            }
+
+            //prevent further modifications from happening until the next sequence
+            platform_update_flag = true;
+            //lvl_0_tile_inc_count += 1;
+        }
+    }
+}
+
 //the function we invoke in HTML
 function _start()
 {
@@ -93,7 +137,7 @@ function _start()
     }
 
     //the main game collectables for the player to collect
-    treat = new sprite(16, 16, TREAT_buffer, TREAT_buffer_size, 160, 0, true, 1, false);
+    treat = new sprite(16, 16, TREAT_buffer, TREAT_buffer_size, 80, 0, true, 1, false);
     treat.create();
 
     //render water last with transparency
@@ -230,6 +274,10 @@ function game_area_update()
             treat_collects+=1;
             treat.visible = false;
             treat_reset_check(treat);
+            //update the platforms if we've collected x number of treats
+            platform_update();
+            //reset the platform update flag
+            platform_update_flag = false;
         }
     }
 
