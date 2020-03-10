@@ -72,6 +72,8 @@ var platform_move_px = 12;
 var platform_move_speed = 0.03;
 //whether the platform is moving by the move_px above
 var platform_moving = false;
+//this flag disables if we are falling which also disables double jumping which is good.
+let can_jump = true;
 
 var keys = 
 {
@@ -79,6 +81,15 @@ var keys =
     left: false,
     right: false
 };
+
+//sounds
+var sound_jump;
+var sound_jump_land;
+var sound_death;
+var sound_get_treat;
+var sound_get_treat2;
+var sound_player_hit;
+var sound_player_respawn;
 
 window.onkeydown = function(e) 
 {
@@ -105,12 +116,15 @@ function platform_move_update()
     if (platform_moving)
     {
         let platforms_left = 0;
+        //+=2 = old player y is stored in elem 1 and platform id is store in elem 2
         for (let i = 0; i < platform_moving_arr.length; i+=2)
         {
             //0 = old player y
             //1 = y id
             if (platform_moving_arr[i+1] != -1)
             {
+                //if they are moving down, then use the old player y to check whether
+                //we have moved enough, then disable the movement
                 if (platform_moving_dir == platform_move_speed)
                 {
                     if (platform[platform_moving_arr[i+1]].y <= (platform_moving_arr[i] + platform_move_px))
@@ -120,6 +134,8 @@ function platform_move_update()
                         platform_moving_arr[i+1] = -1;
                 }
 
+                //if they are moving up, then use the old player y to check whether
+                //we have moved enough, then disable the movement
                 else if (platform_moving_dir == -platform_move_speed)
                 {
                     if (platform[platform_moving_arr[i+1]].y >= (platform_moving_arr[i] - platform_move_px))
@@ -218,6 +234,15 @@ function _start()
     heart_icon = new sprite(16, 16, HEART_buffer, HEART_buffer_size, 270, 9, false, 0, false);
     heart_icon.create();
 
+    //setting up sounds
+    sound_jump = new sound("ASSETS/JUMP.wav");
+    sound_jump_land = new sound("ASSETS/JUMP_LAND.wav");
+    sound_death = new sound("ASSETS/DEATH.wav");
+    sound_get_treat = new sound("ASSETS/GET_TREAT.wav");
+    sound_get_treat2 = new sound("ASSETS/GET_TREAT2.wav");
+    sound_player_hit = new sound("ASSETS/PLAYER_HIT.wav");
+    sound_player_respawn = new sound("ASSETS/RESPAWN.wav");
+
     //loop through the main game update loop
     requestAnimationFrame(game_area_update);
 }
@@ -275,8 +300,10 @@ function game_area_update()
     //player in water y test 
     if (main_sprite.y <= (game_area.canvas.height - 50))
         main_sprite.in_water = false;
-    else if (main_sprite.y > (game_area.canvas.height - 50))
+    else if (main_sprite.y > (game_area.canvas.height - 50)){
+        sound_death.play();
         main_sprite.in_water = true;
+    }
 
     //respawn the main character once fallen beyond the world
     if (main_sprite.y > (200 + main_sprite.height)){
@@ -284,10 +311,11 @@ function game_area_update()
             hearts_left-=1;
         main_sprite.x = lvl_0_tile_xy[0] - 32;
         main_sprite.y = lvl_0_tile_xy[1] - 96;
+        sound_player_respawn.play();
     }
 
     //this flag disables if we are falling which also disables double jumping which is good.
-    let can_jump = true;
+    can_jump = true;
     //log the current y
     //we are falling
     if (main_sprite.y > main_sprite_old_y)
@@ -303,6 +331,7 @@ function game_area_update()
         main_sprite_jump_y = main_sprite.y;
         player_jump = true;
         main_sprite.gravity_use = false;
+        sound_jump.play();
     }
 
     if (player_jump)
@@ -330,6 +359,7 @@ function game_area_update()
     //do collision checks on the player against the treats
     if (main_sprite.collision(treat))
     {
+        sound_get_treat.play();
         //if the treat is visible, add it to our conut
         if (treat.visible)
         {
@@ -348,6 +378,7 @@ function game_area_update()
     //do collision check on player against the main enemy
     if (main_sprite.collision(main_nasty_cat.sprite))
     {
+        sound_player_hit.play();
         //remove a life if we get hit
         if (main_nasty_cat.sprite.visible)
         {

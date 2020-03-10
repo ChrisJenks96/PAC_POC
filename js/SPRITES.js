@@ -232,8 +232,11 @@ function player_down_collision(other)
 {
     if ((main_sprite.y + main_sprite.height) >= other.y && 
         (main_sprite.x + main_sprite.width) > other.x && 
-            main_sprite.x < (other.x + other.width))
+            main_sprite.x < (other.x + other.width)){
+                if (!can_jump)
+                    sound_jump_land.play();
                 main_sprite.y -= 2;
+            }
 }
 
 function player_up_collision(other)
