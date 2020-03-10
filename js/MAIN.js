@@ -38,17 +38,14 @@ const lvl_0_tile_xy =
 
 var lvl_0_tile_inc_count = 0;
 //next platform set (8 bits total, 1 bit per platform)
-//0 = -8px
-//1 = 8px
-
-function hex2bin(hex){
-    return ("00000000" + (parseInt(hex, 16)).toString(2)).substr(-8);
-}
-
+//0 = -platform_move_speed
+//1 = platform_move_speed
 const lvl_0_tile_inc = 
 [
     //only 7 platforms, hence the pattern
-    '0000010'
+    '0000101', 1,
+    '0001001', 0,
+    '0110000', 1
 ];
 
 var main_sprite;
@@ -70,6 +67,11 @@ let platform_update_flag = false;
 var treat_collects = 0;
 //track how many lives we have left
 var hearts_left = 3;
+//how many pixels we move when the platforms move
+var platform_move_px = 12;
+var platform_move_speed = 0.03;
+//whether the platform is moving by the move_px above
+var platform_moving = false;
 
 var keys = 
 {
@@ -96,27 +98,87 @@ window.onkeyup = function(e)
     else if (kc === 32) keys.space = false;
 };
 
+let platform_moving_arr = [];
+let platform_moving_dir = 0;
+function platform_move_update()
+{
+    if (platform_moving)
+    {
+        let platforms_left = 0;
+        for (let i = 0; i < platform_moving_arr.length; i+=2)
+        {
+            //0 = old player y
+            //1 = y id
+            if (platform_moving_arr[i+1] != -1)
+            {
+                if (platform_moving_dir == platform_move_speed)
+                {
+                    if (platform[platform_moving_arr[i+1]].y <= (platform_moving_arr[i] + platform_move_px))
+                        platform[platform_moving_arr[i+1]].y += platform_move_px * platform_moving_dir;
+                    else
+                        //reset ids so we dont use them
+                        platform_moving_arr[i+1] = -1;
+                }
+
+                else if (platform_moving_dir == -platform_move_speed)
+                {
+                    if (platform[platform_moving_arr[i+1]].y >= (platform_moving_arr[i] - platform_move_px))
+                        platform[platform_moving_arr[i+1]].y += platform_move_px * platform_moving_dir;
+                    else
+                        //reset ids so we dont use them
+                        platform_moving_arr[i+1] = -1;
+                }
+            }
+
+            else
+            {
+                //check to see if all the platform ids have been set
+                //then force out the update and continue
+                //+=2 because we have 2 elements per
+                platforms_left+=2;
+                if (platforms_left == platform_moving_arr.length)
+                    platform_moving = false;
+            }
+        }
+    }
+}
+
 function platform_update()
 {
     if ((treat_collects % platform_update_treat_num) == 0)
     {
         if (!platform_update_flag)
         {
-            platform_update_count = 1;
+            platform_moving_arr = [];
             //count will act as the variable to bitwise AND off
             //times count by 2 e.g. 0000 0001 -> 0000 0010
+            let step = lvl_0_tile_inc[(lvl_0_tile_inc_count*2)];
+            //find out the move speed via the 2nd index 
+            platform_moving_dir = lvl_0_tile_inc[(lvl_0_tile_inc_count*2)+1];
+            if (platform_moving_dir == 1)
+                platform_moving_dir = platform_move_speed;
+            else
+                platform_moving_dir = -platform_move_speed;
             for (let i = 0; i < lvl_0_tile_size; i++)
             {
-                let step = lvl_0_tile_inc[lvl_0_tile_inc_count];
-                //if the bit value is 1, move up by 8 ,equal to 0, move down by 8
-                step = step[i] == 1 ? 16 : 0;
-                platform[i].y += step;
-                platform_update_count *= 2;
+                //if the bit value is 1, move up by 4 ,equal to 0, forget it
+                if (step[i] == 1){
+                    //i+0 = old platform y (for comparison)
+                    platform_moving_arr.push(platform[i].y);
+                    //i+1 = the id for platform
+                    platform_moving_arr.push(i);
+                }
+            }
+
+            //if we have some moving platforms, lets tell me
+            if (platform_moving_arr.length > 0){
+                platform_moving = true;
             }
 
             //prevent further modifications from happening until the next sequence
             platform_update_flag = true;
-            //lvl_0_tile_inc_count += 1;
+            if (lvl_0_tile_inc_count < lvl_0_tile_inc.length)
+                lvl_0_tile_inc_count += 1;
         }
     }
 }
@@ -280,6 +342,8 @@ function game_area_update()
             platform_update_flag = false;
         }
     }
+
+    platform_move_update();
 
     //do collision check on player against the main enemy
     if (main_sprite.collision(main_nasty_cat.sprite))
