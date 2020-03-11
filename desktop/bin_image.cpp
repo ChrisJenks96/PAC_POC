@@ -12,7 +12,7 @@ SDL_Surface* bin_image_loader::load(char* fn, int width, int height)
 		int size = ftell(f);
 		fseek(f, 0, SEEK_SET);
 		//load the pixel data into the buffer
-		char* buffer = new char[size];
+		unsigned char* buffer = new unsigned char[size];
 		fread(&buffer[0], size, 1, f);
 		SDL_Surface* s = SDL_CreateRGBSurface(0, width, height, 
 			32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
@@ -34,7 +34,7 @@ SDL_Surface* bin_image_loader::load(char* fn, int width, int height)
 
 		delete buffer;
 		fclose(f);
-		return scale_surface(s, 128, 128);
+		return s;//scale_surface(s, 16, 16);
 	}
 }
 

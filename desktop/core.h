@@ -6,12 +6,12 @@
 	#include <SDL_ttf.h>
 	#include <SDL_mixer.h>
 
-	#define SCR_WIDTH 640
-	#define SCR_HEIGHT 480
-	#define TEX_WIDTH 640
-	#define TEX_HEIGHT 480
+	#define SCR_WIDTH 320
+	#define SCR_HEIGHT 200
+	#define TEX_WIDTH 320
+	#define TEX_HEIGHT 200
 	#define SCR_BPP 32
-	#define SCR_SURF_MODE SDL_HWSURFACE
+	#define SCR_SURF_MODE SDL_HWSURFACE// | SDL_FULLSCREEN
 #else
 	#include <pspkernel.h>
 	#include <pspgu.h>

@@ -83,6 +83,7 @@ var keys =
 };
 
 //sounds
+var death_sound_once_flag = false;
 var sound_jump;
 var sound_jump_land;
 var sound_death;
@@ -301,7 +302,10 @@ function game_area_update()
     if (main_sprite.y <= (game_area.canvas.height - 50))
         main_sprite.in_water = false;
     else if (main_sprite.y > (game_area.canvas.height - 50)){
-        sound_death.play();
+        if (!death_sound_once_flag){
+            sound_death.play();
+            death_sound_once_flag = true;
+        }
         main_sprite.in_water = true;
     }
 
@@ -312,6 +316,7 @@ function game_area_update()
         main_sprite.x = lvl_0_tile_xy[0] - 32;
         main_sprite.y = lvl_0_tile_xy[1] - 96;
         sound_player_respawn.play();
+        death_sound_once_flag = false;
     }
 
     //this flag disables if we are falling which also disables double jumping which is good.
