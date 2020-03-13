@@ -2,10 +2,10 @@
 #define SOUND_H
 
 #ifdef _WIN32
-	#include <SDL_mixer.h>
+	//#include <SDL_mixer.h>
 #elif _PSP
-	#define USE_RWOPS
-	#include <SDL/SDL_mixer.h>
+	//#define USE_RWOPS
+	//#include <SDL/SDL_mixer.h>
 #endif
 
 class sound
@@ -19,7 +19,7 @@ class sound
 		~sound();
 	private:
 		bool playing;
-		Mix_Music* music;
+		//Mix_Music* music;
 };
 
 #endif

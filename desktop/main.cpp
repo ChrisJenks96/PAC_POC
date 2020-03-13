@@ -6,7 +6,22 @@
 //constants for storing level data
 #include "level.h"
 
-static void player_move_update(core* main_core, physics_sprite* player, sprite* platform)
+
+
+//resetting the treat when it goes out of world bounds
+static void treat_reset_check(physics_sprite* treat)
+{
+	if (treat->get_sr()->y >= SCR_HEIGHT)
+    {
+        //treat->speedy = -1; //random speed vector for falling
+		treat->get_sr()->y = 0; //reset off screen
+        treat->get_sr()->x = SCR_WIDTH / 2;//Math.random() * game_area.canvas.width;
+        treat->visible = true;
+    }
+}
+
+static void player_move_update(core* main_core, physics_sprite* player, sprite* platform, physics_sprite* treat, 
+							   unsigned int* treat_collects)
 {
 	int c = 0;
 	//zero the velocity of the sprite off
@@ -39,10 +54,28 @@ static void player_move_update(core* main_core, physics_sprite* player, sprite* 
 
 	//check to see if the player is in the water or not
 	player->in_water_collision_update(SCR_HEIGHT - 50);
-
+	//make sure the player does not escape bounds
 	player->out_of_world_update(SCR_HEIGHT, lvl_0_tile_xy);
-
+	//jump routine for the player
 	player->jump_update(main_core->get_input_keys()[32]);
+
+	//if we collide with the treat, increment
+	if (player->collision_update(treat))
+	{
+		//sound_get_treat.play();
+        //if the treat is visible, add it to our conut
+        if (treat->visible)
+        {
+            *treat_collects+=1;
+            treat->visible = false;
+            /*//update the platforms if we've collected x number of treats
+            platform_update();
+            //reset the platform update flag
+            platform_update_flag = false;*/
+        }
+	}
+
+	treat_reset_check(treat);
 
 	//physics sprite update code here....
 	player->update(SCR_WIDTH, SCR_HEIGHT);
@@ -56,22 +89,23 @@ int main(int argc, char** argv)
 	//create the binary loader for the images
 	bin_image_loader b_loader;
 	//load in the resources for the game
-	sprite platform[lvl_0_tile_size], treat, treat_icon, heart_icon, water;
-	physics_sprite player, nasty_cat;
+	unsigned int treat_collects = 0;
+	sprite platform[lvl_0_tile_size], treat_icon, heart_icon, water;
+	physics_sprite player, nasty_cat, treat;
 
 	water.init(1, SCR_WIDTH, 32, 0, SCR_HEIGHT - 32);
-	player.init(b_loader.load("DOG.bin", 16, 16), lvl_0_tile_xy[0] - 32, lvl_0_tile_xy[1] - 96);
+	player.init(b_loader.load("ASSETS/DOG.bin", 16, 16), lvl_0_tile_xy[0] - 32, lvl_0_tile_xy[1] - 96);
 	
 	int index, c = 0;
 	for (index = 0; index < lvl_0_tile_size; index++){
-		platform[index].init(b_loader.load("PLATFORM.bin", 16, 16), lvl_0_tile_xy[c] - 32, lvl_0_tile_xy[c+1] - 32);
+		platform[index].init(b_loader.load("ASSETS/PLATFORM.bin", 16, 16), lvl_0_tile_xy[c] - 32, lvl_0_tile_xy[c+1] - 32);
 		c+=2;
 	}
 
-	treat.init(b_loader.load("TREAT.bin", 16, 16), 80, 0);
-	nasty_cat.init(b_loader.load("NASTY_CAT.bin", 16, 16), 0, 0);
-	treat_icon.init(b_loader.load("TREAT.bin", 16, 16), 10, 9);
-	heart_icon.init(b_loader.load("HEART.bin", 16, 16), 270, 9);
+	treat.init(b_loader.load("ASSETS/TREAT.bin", 16, 16), 80, 0);
+	nasty_cat.init(b_loader.load("ASSETS/NASTY_CAT.bin", 16, 16), 0, 0);
+	treat_icon.init(b_loader.load("ASSETS/TREAT.bin", 16, 16), 10, 9);
+	heart_icon.init(b_loader.load("ASSETS/HEART.bin", 16, 16), 270, 9);
 
 	while (!main_core.is_quit())
 	{
@@ -79,9 +113,11 @@ int main(int argc, char** argv)
 		main_core.pre_update();
 		main_core.update();
 
-		player_move_update(&main_core, &player, platform); 
+		player_move_update(&main_core, &player, platform, &treat, &treat_collects); 
 
 		nasty_cat.update(SCR_WIDTH, SCR_HEIGHT);
+		treat.update(SCR_WIDTH, SCR_HEIGHT);
+
 		//put your sprite rendering code here...
 		player.render(main_core.get_screen());
 		for (index = 0; index < lvl_0_tile_size; index++)

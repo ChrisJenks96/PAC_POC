@@ -4,7 +4,6 @@
 #ifdef _WIN32
 	#include <SDL.h>
 	#include <SDL_ttf.h>
-	#include <SDL_mixer.h>
 
 	#define SCR_WIDTH 320
 	#define SCR_HEIGHT 200
@@ -21,7 +20,6 @@
 	#include "callbacks.h"
 	#include <SDL/SDL.h>
 	#include <SDL/SDL_ttf.h>
-	#include <SDL/SDL_mixer.h>
 
 	#define SCR_WIDTH 320
 	#define SCR_HEIGHT 200

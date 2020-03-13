@@ -136,7 +136,7 @@ void physics_sprite::left_collision(sprite* other)
     //if we come from the left, stop us going into the object
     //other.y + 1 just add more of a bigger boundary for the player to hit
 	if ((sr.x - other->get_sr()->w) > other->get_sr()->x && sr.x < ((other->get_sr()->x + other->get_sr()->w) + PLATFORM_WIDTH_OFFSET) &&
-		((sr.y + SPRITE_COL_Y_OFFSET) > (sr.y + 1) &&
+		((sr.y + SPRITE_COL_Y_OFFSET) > (other->get_sr()->y + 1) &&
 			(sr.y - SPRITE_COL_Y_OFFSET) < ((other->get_sr()->y + other->get_sr()->h))))
                 sr.x += 1;
 }

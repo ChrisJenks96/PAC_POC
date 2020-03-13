@@ -34,7 +34,8 @@ bool sprite::init(unsigned char rgb_index, short w, short h, short _x, short _y)
 
 void sprite::render(SDL_Surface* scr)
 {
-	SDL_BlitSurface(s, 0, scr, &sr);
+	if (visible)
+		SDL_BlitSurface(s, 0, scr, &sr);
 }
 
 //unload the sprite surface when the object is destroyed from stack

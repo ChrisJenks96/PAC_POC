@@ -19,7 +19,7 @@ bool core::init(int _fps)
 		return false;
 
 	//init sdl mixer
-	Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
+	//Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
 	return true;
 }
 

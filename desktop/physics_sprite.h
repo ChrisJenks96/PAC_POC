@@ -17,6 +17,7 @@ class physics_sprite : public sprite
 			wb_check = false; in_water = false; gravity_use = true; can_jump = false; is_jump = false;
 			old_jump_y = 0; old_y = 0; speedx = 0; speedy = 0;
 		}
+
 		bool collision_update(physics_sprite* other); 
 		void world_bound_check(short scr_w, short scr_h);
 		void left_collision(sprite* other);
