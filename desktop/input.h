@@ -7,11 +7,14 @@
 	#include <SDL/SDL.h>
 #endif
 
+#include <memory.h>
+
 class input
 {
 	public:
-		input(){quit = false;}
+		input(){quit = false; memset(&keys[0], 0, 256);}
 		void update();
+		bool* get_keys(){return keys;}
 		bool is_quit(){return quit;}
 		#ifdef _PSP
 			int isKeyDown(int key);
@@ -23,6 +26,7 @@ class input
 			SceCtrlData pad;
 			SceCtrlLatch latch;
 		#endif
+		bool keys[256];
 		bool quit;
 		SDL_Event e;
 };

@@ -48,6 +48,7 @@ class core
 		void pre_update();
 		void update();
 		void render();
+		bool* get_input_keys(){return in.get_keys();}
 		SDL_Surface* get_screen(){return screen;}
 		float get_deltatime(){return deltatime;}
 		bool is_quit(){return in.is_quit();}

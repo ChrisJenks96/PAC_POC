@@ -10,23 +10,17 @@ void input::update()
 			case SDL_QUIT:
 				quit = true;
 				break;
-			case SDL_MOUSEBUTTONDOWN:
+			/*case SDL_MOUSEBUTTONDOWN:
 				{
 					default:
 						break;
-				}
+				}*/
 			case SDL_KEYUP:
-				switch(e.key.keysym.sym )
-				{
-					default:
-						break;
-				}
+				keys[e.key.keysym.sym] = false;
+				break;
 			case SDL_KEYDOWN:
-				switch(e.key.keysym.sym )
-				{
-					default:
-						break;
-				}
+				keys[e.key.keysym.sym] = true;
+				break;
 		}
 	#else
 		sceCtrlReadBufferPositive(&pad, 1); 

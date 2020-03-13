@@ -6,6 +6,48 @@
 //constants for storing level data
 #include "level.h"
 
+static void player_move_update(core* main_core, physics_sprite* player, sprite* platform)
+{
+	int c = 0;
+	//zero the velocity of the sprite off
+	player->zero();
+	//player pressed 'd'
+	if (main_core->get_input_keys()[100])
+	{
+		for (c = 0; c < lvl_0_tile_size; c++){
+			player->right_collision(&platform[c]);
+		}
+
+		player->speedx = 1;
+	}
+
+	//player pressed 'a'
+	if (main_core->get_input_keys()[97])
+	{
+		for (c = 0; c < lvl_0_tile_size; c++){
+			player->left_collision(&platform[c]);
+		}
+
+		player->speedx = -1;
+	}
+
+	//do collision checks against the platforms
+	for (c = 0; c < lvl_0_tile_size; c++){
+		player->up_collision(&platform[c]);
+		player->down_collision(&platform[c]);
+	}
+
+	//check to see if the player is in the water or not
+	player->in_water_collision_update(SCR_HEIGHT - 50);
+
+	player->out_of_world_update(SCR_HEIGHT, lvl_0_tile_xy);
+
+	player->jump_update(main_core->get_input_keys()[32]);
+
+	//physics sprite update code here....
+	player->update(SCR_WIDTH, SCR_HEIGHT);
+}
+
 int main(int argc, char** argv)
 {	
 	core main_core;
@@ -36,14 +78,8 @@ int main(int argc, char** argv)
 		//prelim updates before render everything out
 		main_core.pre_update();
 		main_core.update();
-		//physics sprite update code here....
-		player.update(SCR_WIDTH, SCR_HEIGHT);
-		//do collision checks against the platforms
-		for (c = 0; c < lvl_0_tile_size; c++){
-			player.up_collision(&platform[c]);
-			player.down_collision(&platform[c]);
-		}
 
+		player_move_update(&main_core, &player, platform); 
 
 		nasty_cat.update(SCR_WIDTH, SCR_HEIGHT);
 		//put your sprite rendering code here...
