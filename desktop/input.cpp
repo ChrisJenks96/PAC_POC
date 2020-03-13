@@ -4,6 +4,7 @@ void input::update()
 {
 	//events
 	#ifdef _WIN32
+	#elif __linux__
 		SDL_PollEvent(&e);
 		switch (e.type)
 		{

@@ -3,6 +3,8 @@
 
 #ifdef _WIN32
 	#include <SDL.h>
+#elif __linux__
+	#include <SDL/SDL.h>
 #else
 	#include <SDL/SDL.h>
 #endif

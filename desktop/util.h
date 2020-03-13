@@ -6,6 +6,9 @@
 	#include <SDL_ttf.h>
 	//performance shite
 	#include <windows.h>
+#elif __linux__
+	#include <SDL/SDL.h>
+	#include <SDL/SDL_ttf.h>
 #else
 	#include <pspctrl.h>
 	#include <SDL/SDL.h>

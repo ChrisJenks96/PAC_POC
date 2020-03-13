@@ -3,6 +3,8 @@
 
 #ifdef _WIN32
 	#include <SDL_ttf.h>
+#elif __linux__
+	#include <SDL/SDL_ttf.h>
 #else
 	#include <SDL/SDL_ttf.h>
 #endif
@@ -27,7 +29,7 @@ class font
 	public:
 		font(){}
 		bool init(int width, int height);
-		font_surface* font::create(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text);
+		font_surface* create(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text);
 		void update();
 		void render(SDL_Surface* scr, font_surface* s, int n);
 		void destroy(font_surface* s, int n);

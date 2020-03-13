@@ -1,8 +1,10 @@
 #ifndef BIN_IMAGE_H
 #define BIN_IMAGE_H
 
-#ifdef _WIN32
+#ifdef _WIN32 
 	#include <SDL.h>
+#elif __linux__
+	#include <SDL/SDL.h>
 #else
 	#include <SDL/SDL.h>
 #endif

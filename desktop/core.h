@@ -11,6 +11,16 @@
 	#define TEX_HEIGHT 200
 	#define SCR_BPP 32
 	#define SCR_SURF_MODE SDL_HWSURFACE// | SDL_FULLSCREEN
+#elif __linux__
+	#include <SDL/SDL.h>
+	#include <SDL/SDL_ttf.h>
+
+	#define SCR_WIDTH 320
+	#define SCR_HEIGHT 200
+	#define TEX_WIDTH 320
+	#define TEX_HEIGHT 200
+	#define SCR_BPP 32
+	#define SCR_SURF_MODE SDL_HWSURFACE// | SDL_FULLSCREEN
 #else
 	#include <pspkernel.h>
 	#include <pspgu.h>
