@@ -1,5 +1,6 @@
 #include "core.h"
 #include "bin_image.h"
+#include "physics_sprite.h"
 #include "sprite.h"
 
 //constants for storing level data
@@ -13,7 +14,8 @@ int main(int argc, char** argv)
 	//create the binary loader for the images
 	bin_image_loader b_loader;
 	//load in the resources for the game
-	sprite player, platform[lvl_0_tile_size], treat, nasty_cat, treat_icon, heart_icon, water;
+	sprite platform[lvl_0_tile_size], treat, treat_icon, heart_icon, water;
+	physics_sprite player, nasty_cat;
 
 	water.init(1, SCR_WIDTH, 32, 0, SCR_HEIGHT - 32);
 	player.init(b_loader.load("DOG.bin", 16, 16), lvl_0_tile_xy[0] - 32, lvl_0_tile_xy[1] - 96);
@@ -34,6 +36,16 @@ int main(int argc, char** argv)
 		//prelim updates before render everything out
 		main_core.pre_update();
 		main_core.update();
+		//physics sprite update code here....
+		player.update(SCR_WIDTH, SCR_HEIGHT);
+		//do collision checks against the platforms
+		for (c = 0; c < lvl_0_tile_size; c++){
+			player.up_collision(&platform[c]);
+			player.down_collision(&platform[c]);
+		}
+
+
+		nasty_cat.update(SCR_WIDTH, SCR_HEIGHT);
 		//put your sprite rendering code here...
 		player.render(main_core.get_screen());
 		for (index = 0; index < lvl_0_tile_size; index++)

@@ -13,11 +13,12 @@ class sprite
 {
 	public:
 		sprite(){}
-		bool init(SDL_Surface* _s, unsigned short x, unsigned short y);
-		bool init(unsigned char rgb_index, unsigned short w, unsigned short h, unsigned short _x, unsigned short _y);
+		SDL_Rect* get_sr(){return &sr;}
+		bool init(SDL_Surface* _s, short x, short y);
+		bool init(unsigned char rgb_index, short w, short h, short _x, short _y);
 		void render(SDL_Surface* scr);
 		~sprite();
-	private:
+	protected:
 		SDL_Surface* s;
 		SDL_Rect sr;
 };

@@ -1,6 +1,6 @@
 #include "sprite.h"
 
-bool sprite::init(SDL_Surface* _s, unsigned short _x, unsigned short _y)
+bool sprite::init(SDL_Surface* _s, short _x, short _y)
 {
 	s = _s;
 	sr.x = _x;
@@ -10,7 +10,7 @@ bool sprite::init(SDL_Surface* _s, unsigned short _x, unsigned short _y)
 	return true;
 }
 
-bool sprite::init(unsigned char rgb_index, unsigned short w, unsigned short h, unsigned short _x, unsigned short _y)
+bool sprite::init(unsigned char rgb_index, short w, short h, short _x, short _y)
 {
 	//*=3 because we pass an index in
 	rgb_index *= 3;
