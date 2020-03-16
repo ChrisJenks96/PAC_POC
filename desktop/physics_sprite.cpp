@@ -3,7 +3,7 @@
 
 #include "physics_sprite.h"
 
-bool physics_sprite::collision_update(physics_sprite* other)
+bool physics_sprite::collision_update(sprite* other)
 {
 	short left = sr.x;
 	short right = sr.x + sr.w;

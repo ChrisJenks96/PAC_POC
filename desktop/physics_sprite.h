@@ -18,7 +18,7 @@ class physics_sprite : public sprite
 			old_jump_y = 0; old_y = 0; speedx = 0; speedy = 0;
 		}
 
-		bool collision_update(physics_sprite* other); 
+		bool collision_update(sprite* other); 
 		void world_bound_check(short scr_w, short scr_h);
 		void left_collision(sprite* other);
 		void right_collision(sprite* other);

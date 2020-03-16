@@ -11,7 +11,7 @@ bool core::init(int _fps)
 		sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 	#endif
 
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER);
 	screen = SDL_SetVideoMode(SCR_WIDTH, SCR_HEIGHT, SCR_BPP, SCR_SURF_MODE);
 	SDL_WM_SetCaption("Who's a Good Boy!", NULL);
 
@@ -47,7 +47,7 @@ void core::render()
 	unsigned int timerFps = SDL_GetTicks() - start_clock; //I get the time it took to update and draw;
 	if(timerFps < (1000.0f / (float)fps)) // if timerFps is < 16.6666...7 ms (meaning it loaded the frame too fast)
 		SDL_Delay((1000.0f / (float)fps) - timerFps); //delay the frame to be in time	
-		
+
 	SDL_Flip(screen);
 	deltatime = ((float)(SDL_GetTicks() - start_clock)) / 1000.0f;
 	start_clock = SDL_GetTicks();

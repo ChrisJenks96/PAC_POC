@@ -2,6 +2,7 @@
 #include "bin_image.h"
 #include "physics_sprite.h"
 #include "sprite.h"
+#include "enemy.h"
 
 //constants for storing level data
 #include "level.h"
@@ -18,8 +19,8 @@ static void treat_reset_check(physics_sprite* treat)
     }
 }
 
-static void player_move_update(core* main_core, physics_sprite* player, sprite* platform, physics_sprite* treat, 
-							   unsigned int* treat_collects)
+static void player_move_update(core* main_core, physics_sprite* player, sprite* platform, enemy* nasty_cat,
+	physics_sprite* treat, unsigned int* treat_collects, unsigned int* hearts_left)
 {
 	int c = 0;
 	//zero the velocity of the sprite off
@@ -73,6 +74,19 @@ static void player_move_update(core* main_core, physics_sprite* player, sprite* 
         }
 	}
 
+	if (player->collision_update(nasty_cat))
+	{
+		//sound_player_hit.play();
+        //remove a life if we get hit
+        if (nasty_cat->visible)
+        {
+            if (*hearts_left > 0)
+                *hearts_left-=1;
+            nasty_cat->visible = false;
+            nasty_cat->reset_pos();
+        }
+	}
+
 	treat_reset_check(treat);
 
 	//physics sprite update code here....
@@ -106,7 +120,8 @@ int main(int argc, char** argv)
 	//load in the resources for the game
 	unsigned int treat_collects = 0, lives_left = 3;
 	sprite platform[lvl_0_tile_size], treat_icon, heart_icon, water;
-	physics_sprite player, nasty_cat, treat;
+	physics_sprite player, treat;
+	enemy nasty_cat;
 
 	water.init(1, SCR_WIDTH, 32, 0, SCR_HEIGHT - 32);
 	player.init(b_loader.load("ASSETS/DOG.bin", 16, 16), lvl_0_tile_xy[0] - 32, lvl_0_tile_xy[1] - 96);
@@ -122,16 +137,23 @@ int main(int argc, char** argv)
 	treat_icon.init(b_loader.load("ASSETS/TREAT.bin", 16, 16), 10, 9);
 	heart_icon.init(b_loader.load("ASSETS/HEART.bin", 16, 16), 270, 9);
 
+	unsigned int currTime = 0, lastTime = 0;
 	while (!main_core.is_quit())
 	{
 		//prelim updates before render everything out
 		main_core.pre_update();
 		main_core.update();
 
-		player_move_update(&main_core, &player, platform, &treat, &treat_collects); 
+		player_move_update(&main_core, &player, platform, &nasty_cat, 
+			&treat, &treat_collects, &lives_left); 
 
-		nasty_cat.update(SCR_WIDTH, SCR_HEIGHT);
 		treat.update(SCR_WIDTH, SCR_HEIGHT);
+
+		currTime = SDL_GetTicks();
+		if (currTime > lastTime + 0){
+			nasty_cat.update(&main_core, &player);
+			lastTime = currTime;
+		}
 
 		//put your sprite rendering code here...
 		player.render(main_core.get_screen());
