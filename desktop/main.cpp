@@ -6,8 +6,6 @@
 //constants for storing level data
 #include "level.h"
 
-
-
 //resetting the treat when it goes out of world bounds
 static void treat_reset_check(physics_sprite* treat)
 {
@@ -81,6 +79,23 @@ static void player_move_update(core* main_core, physics_sprite* player, sprite* 
 	player->update(SCR_WIDTH, SCR_HEIGHT);
 }
 
+//outputting the remaining health and score to the screen
+static void scores_text_output(core* mc, int num_lives, int num_collects)
+{
+	//create the text as an sdl surface, render it then destroy it 
+	//for the next line of text we need
+	char buffer[32];
+	sprintf(buffer, "<y>X%i<y>", num_lives);
+	mc->get_font()->create(buffer, 32, 9, false);
+	mc->get_font()->render(mc->get_screen(), 1);
+	mc->get_font()->destroy(1);
+
+	sprintf(buffer, "<r>X%i<r>", num_collects);
+	mc->get_font()->create(buffer, 292, 9, false);
+	mc->get_font()->render(mc->get_screen(), 1);
+	mc->get_font()->destroy(1);
+}
+
 int main(int argc, char** argv)
 {	
 	core main_core;
@@ -89,7 +104,7 @@ int main(int argc, char** argv)
 	//create the binary loader for the images
 	bin_image_loader b_loader;
 	//load in the resources for the game
-	unsigned int treat_collects = 0;
+	unsigned int treat_collects = 0, lives_left = 3;
 	sprite platform[lvl_0_tile_size], treat_icon, heart_icon, water;
 	physics_sprite player, nasty_cat, treat;
 
@@ -127,6 +142,8 @@ int main(int argc, char** argv)
 		treat_icon.render(main_core.get_screen());
 		heart_icon.render(main_core.get_screen());
 		water.render(main_core.get_screen());
+		//render out the scores and lives
+		scores_text_output(&main_core, treat_collects, lives_left);
 		//render everything out
 		main_core.render();
 	}

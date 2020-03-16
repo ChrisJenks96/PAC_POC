@@ -59,6 +59,7 @@ class core
 		bool* get_input_keys(){return in.get_keys();}
 		SDL_Surface* get_screen(){return screen;}
 		float get_deltatime(){return deltatime;}
+		font* get_font(){return &main_font;}
 		bool is_quit(){return in.is_quit();}
 		~core();
 	private:

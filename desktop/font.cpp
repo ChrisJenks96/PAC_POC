@@ -10,21 +10,23 @@ bool font::init(int width, int height)
 	#ifdef _WIN32
 		ratio = (float)width / 800.0f;
 		size = (int)(20.0f * ratio);
+	#elif __linux__
+		ratio = (float)width / 800.0f;
+		size = (int)(20.0f * ratio);
 	#elif _PSP
 		ratio = (float)width / 480.0f;
 		size = (int)(14.0f * ratio);
 	#endif
 
-	mf = TTF_OpenFont("Chapaza.ttf", size);
+	mf = TTF_OpenFont("ASSETS/upheavtt.ttf", 16);
 	if (mf == NULL)
 		return false;
 
 	return true;
 }
 
-font_surface* font::create(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int x, int y, bool center_text)
+void font::create(char* txt, int x, int y, bool center_text)
 {
-	font_surface* s;
 	int i = 0, c = 0, surf_count = 0, str_size = str_find(txt, '>');
 	//oversized int array to store color elems (if any)
 	unsigned char* txt_col_ids = new unsigned char[str_size];
@@ -52,7 +54,7 @@ font_surface* font::create(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int
 
 	i = c = 0;
 	//create the surfaces
-	s = new font_surface[surf_count];
+	mfs = new font_surface[surf_count];
 	for (; i < surf_count; i++)
 	{
 		int txt_split_count = (int)txt_col_ids[c+3] - (int)txt_col_ids[c+1];
@@ -61,27 +63,30 @@ font_surface* font::create(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int
 		switch(txt_col_ids[c])
 		{
 			case 'w':
-				s[i].s = TTF_RenderText_Solid(f, str, white);
+				mfs[i].s = TTF_RenderText_Solid(mf, str, white);
 				break;
 			case 'r':
-				s[i].s = TTF_RenderText_Solid(f, str, red);
+				mfs[i].s = TTF_RenderText_Solid(mf, str, red);
 				break;
 			case 'g':
-				s[i].s = TTF_RenderText_Solid(f, str, green);
+				mfs[i].s = TTF_RenderText_Solid(mf, str, green);
 				break;
 			case 'b':
-				s[i].s = TTF_RenderText_Solid(f, str, blue);
+				mfs[i].s = TTF_RenderText_Solid(mf, str, blue);
+				break;
+			case 'y':
+				mfs[i].s = TTF_RenderText_Solid(mf, str, yellow);
 				break;
 		}
 
 		//if its the origin text, set it to the source
 		if (i == 0)
 		{
-			s[i].r.x = x;
-			s[i].r.y = y;
+			mfs[i].r.x = x;
+			mfs[i].r.y = y;
 			if (center_text){
-				s[i].r.x -= (s[i].s->w / 2);
-				s[i].r.y -= (s[i].s->h / 2);
+				mfs[i].r.x -= (mfs[i].s->w / 2);
+				mfs[i].r.y -= (mfs[i].s->h / 2);
 			}
 		}
 
@@ -89,12 +94,12 @@ font_surface* font::create(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int
 		{
 			//offset previous surface against the new one
 			if (center_text){
-				s[i-1].r.x -= (s[i].s->w / 2);
+				mfs[i-1].r.x -= (mfs[i].s->w / 2);
 			}
 			//create the whitespace between characters
 			//change 8 to font whitespace pixel width
-			s[i].r.x = s[i-1].r.x + s[i-1].s->w + 5;
-			s[i].r.y = s[i-1].r.y;	
+			mfs[i].r.x = mfs[i-1].r.x + mfs[i-1].s->w + 5;
+			mfs[i].r.y = mfs[i-1].r.y;	
 		}
 
 		c+=4;
@@ -102,7 +107,6 @@ font_surface* font::create(TTF_Font* f, char* txt, SDL_Color b, SDL_Color h, int
 
 	delete txt_col_ids;
 	txt_col_ids = NULL;
-	return s;
 }
 
 void font::update()
@@ -110,19 +114,19 @@ void font::update()
 
 }
 
-void font::render(SDL_Surface* scr, font_surface* s, int n)
+void font::render(SDL_Surface* scr, int n)
 {
 	int i;
 	for (i = 0; i < n; i++){
-		SDL_BlitSurface(s[i].s, NULL, scr, &s[i].r);
+		SDL_BlitSurface(mfs[i].s, NULL, scr, &mfs[i].r);
 	}
 }
 
-void font::destroy(font_surface* s, int n)
+void font::destroy(int n)
 {
 	int i;
 	for (i = 0; i < n; i++){
-		SDL_FreeSurface(s[i].s);
+		SDL_FreeSurface(mfs[i].s);
 	}
 }
 
@@ -130,6 +134,4 @@ font::~font()
 {
 	//Close the font that was used
     TTF_CloseFont(mf);
-	//Quit SDL_ttf
-    TTF_Quit();
 }
