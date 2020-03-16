@@ -19,8 +19,10 @@ bool font::init(int width, int height)
 	#endif
 
 	mf = TTF_OpenFont("ASSETS/upheavtt.ttf", 16);
-	if (mf == NULL)
+	if (mf == NULL){
+		printf("error: TTF_OpenFont('ASSETS/upheavtt.ttf')");
 		return false;
+	}
 
 	return true;
 }
@@ -133,5 +135,8 @@ void font::destroy(int n)
 font::~font()
 {
 	//Close the font that was used
-    TTF_CloseFont(mf);
+	if (mf != NULL)
+    	TTF_CloseFont(mf);
+	//Quit SDL_ttf
+    TTF_Quit();
 }

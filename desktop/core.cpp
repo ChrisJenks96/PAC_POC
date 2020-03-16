@@ -56,8 +56,6 @@ void core::render()
 core::~core()
 {
 	SDL_Quit();
-	//Quit SDL_ttf
-    TTF_Quit();
 
 	#ifdef _PSP
 		sceKernelExitGame();
